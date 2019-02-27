@@ -226,7 +226,9 @@ Parameters:
       - i3.xlarge
       - r3.xlarge
       - r4.xlarge
+      - r4.2xlarge
       - r5.xlarge
+      - r5.2xlarge
     ConstraintDescription: Must be a valid EC2 instance type
     Description: Type of EC2 instance for the SDH Installation Host instance
     Type: String
@@ -349,7 +351,7 @@ Resources:
         PublicSubnet3ID: !Ref PublicSubnet3ID
         KeyPairName: !Ref KeyPairName
         QSS3BucketName: !Ref QSS3BucketName
-        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        QSS3KeyPrefix: !Sub "${QSS3KeyPrefix}submodules/quickstart-amazon-eks/"
         ProvisionBastionHost: !Ref ProvisionBastionHost
         PrivateSubnet1ID: !Ref PrivateSubnet1ID
         PrivateSubnet2ID: !Ref PrivateSubnet2ID

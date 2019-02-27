@@ -10,7 +10,13 @@
 
 
 
-###Global Variables###
+###BEGIN-Global Variables###
+SDH_SW_TARGET="/tmp/SDH"
+#this is the min. size the s/w should be when downloaded
+SDH_TOTAL_SIZE="1840408"
+#this is the min. number of ECR repositories that should be created
+ECR_REPOS_COUNT="30"
+###END-Global Variables###
 
 
 #source our configuration file
@@ -25,10 +31,20 @@ sed -i '/SDH_VORA_PASS/d'  /root/install/config
 if [ "$SDH_VERSION" == "2.4" ]
 then
         echo "2.4 - $SDH_VERSION"
+
+        if [ "$EKS_CLUSTER_VERSION" == "1.11" ]
+        then
+                echo "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
+                echo "Choose SAP Data Hub version *2.4.1* if you want to run EKS version *1.11*"
+                echo "Check the SAP Data Hub Platform Availability Matrix for supported combinations"
+                echo "https://support.sap.com/content/dam/launchpad/en_us/pam/pam-essentials/SAP_Data_Hub_2_PAM.pdf"
+                exit 1
+        fi
 else
         echo "2.4.1 - $SDH_VERSION"
 fi
 
+#setup the kubectl configuration
 export KUBECONFIG="/root/.kube/config"
 
 aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$REGION"
@@ -36,6 +52,35 @@ aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$REGION"
 sleep 5
 
 echo "KUBECONFIG = $KUBECONFIG"
+
+#download the SAP Data Hub software
+mkdir "$SDH_SW_TARGET"
+
+aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+
+#try to re-download the files if there is an issue with downloaded file size
+SDH_DNL_SIZE=$(du -sk "$SDH_SW_TARGET" | cut -f1)
+
+
+if [ ${SDH_DNL_SIZE} -le ${SDH_TOTAL_SIZE} ]
+then
+        echo "Retrying S3 download..."
+        aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+
+fi
+
+#validate the download
+cd "$SDH_SW_TARGET"
+unzip -o *
+
+INSTALL_SH=$(find . -name install.sh)
+
+if [ ! -f "$INSTALL_SH" ]
+then
+        echo "Can not find install.sh file, $INSTALL_SH -- EXITING"
+        exit 1
+fi
+
 
 #test to see if we can communicate to the EKS cluster
 EKS_STATUS=$(kubectl get nodes | wc -l)
@@ -76,11 +121,24 @@ fi
 #download helm
 cd /tmp
 
-curl https://storage.googleapis.com/kubernetes-helm/helm-v2.10.0-linux-amd64.tar.gz > helm-v2.10.0-linux-amd64.tar.gz
+#match the helm version to the EKS version
+if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
+then
+        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.10.0-linux-amd64.tar.gz > helm-v2.10.0-linux-amd64.tar.gz
+        
+fi
 
-gzip -fd helm-v2.10.0-linux-amd64.tar.gz
+if [ "$EKS_CLUSTER_VERSION" == "1.11" ]
+then
+        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz > helm-v2.11.0-linux-amd64.tar.gz
 
-tar -xvf helm-v2.10.0-linux-amd64.tar
+        
+fi
+
+#unpack and copy the helm executable
+gzip -fd helm-*.gz
+
+tar -xvf helm-*.tar
 
 cp linux-amd64/helm /usr/bin
 chmod 755 /usr/bin/helm
@@ -93,7 +151,13 @@ helm init --service-account tiller
 
 sleep 15
 
-#HELM_STATUS=$(helm ls)
+#the output of the helm ls command should actually be nothing
+HELM_LS_STATUS=$(helm ls)
+
+if [ ! -z "$HELM_LS_STATUS" ]
+then
+        echo "helm ls command is not empty, need to recheck helm ls again"
+fi
 
 #look to see if helm is up and running
 HELM_POD_STATUS=$(kubectl get pods --all-namespaces | grep tiller | awk '{ print $4 }')
@@ -122,24 +186,7 @@ else
 fi
 
 
-#download the SAP Data Hub software
-mkdir /tmp/SDH
-
-aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} /tmp/SDH
-
-#validate the download
-cd /tmp/SDH
-unzip -o *
-
-INSTALL_SH=$(find . -name install.sh)
-
-if [ ! -f "$INSTALL_SH" ]
-then
-        echo "Can not find install.sh file, $INSTALL_SH -- EXITING"
-        exit 1
-fi
-
-
+#The below is simply to document the necessary ECR repositories needed by the SAP Data Hub installation process
 #Create the ECR repositories needed for the SAP Data Hub installation
 #aws ecr create-repository --repository-name=com.sap.datahub.linuxx86_64/vora-dqp --region $REGION
 #aws ecr create-repository --repository-name=com.sap.datahub.linuxx86_64/vora-dqp-textanalysis --region $REGION
@@ -178,7 +225,7 @@ fi
 
 #validate that all ECR repos were created
 ECR_REPOS=$(aws ecr describe-repositories --region $REGION --output text | wc -l)
-ECR_REPOS_COUNT="30"
+
 
 if [ "$ECR_REPOS" -lt "$ECR_REPOS_COUNT" ]
 then
@@ -199,10 +246,10 @@ fi
 ECR_NAME=$(aws ecr describe-repositories --region $REGION --output text | tail -1 | awk '{ print $NF }' | awk -F "/" '{ print $1 }')
 
 #start the SAP Data Hub silent installation
-#bash "$INSTALL_SH" -n datahub -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
+#bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
 
 
-bash "$INSTALL_SH" -n datahub -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
+bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
 
 #validate SAP Data Hub installation
 
