@@ -401,6 +401,12 @@ Resources:
                owner: root
                group: root
                authentication: S3AccessCreds
+            "/root/install/ingress.yaml": 
+               source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/ingress.yaml'
+               mode: 000500
+               owner: root
+               group: root
+               authentication: S3AccessCreds
             "/root/install/storage-class.yaml": 
                source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/storage-class.yaml'
                mode: 000500
