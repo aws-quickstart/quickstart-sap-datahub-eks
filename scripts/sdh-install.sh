@@ -16,6 +16,9 @@ SDH_SW_TARGET="/tmp/SDH"
 SDH_TOTAL_SIZE="1840408"
 #this is the min. number of ECR repositories that should be created
 ECR_REPOS_COUNT="30"
+HELM_YAML="/root/install/helm.yaml"
+INGRESS_YAML="/root/install/ingress.yaml"
+STORAGE_YAML="/root/install/storage-class.yaml"
 ###END-Global Variables###
 
 
@@ -38,6 +41,7 @@ then
                 echo "Choose SAP Data Hub version *2.4.1* if you want to run EKS version *1.11*"
                 echo "Check the SAP Data Hub Platform Availability Matrix for supported combinations"
                 echo "https://support.sap.com/content/dam/launchpad/en_us/pam/pam-essentials/SAP_Data_Hub_2_PAM.pdf"
+                bash /root/install/signal-final-status.sh 1 "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
                 exit 1
         fi
 else
@@ -78,6 +82,7 @@ INSTALL_SH=$(find . -name install.sh)
 if [ ! -f "$INSTALL_SH" ]
 then
         echo "Can not find install.sh file, $INSTALL_SH -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "Can not find install.sh file, $INSTALL_SH -- EXITING"
         exit 1
 fi
 
@@ -100,6 +105,7 @@ do
     if [ "$EKS_STATUS_LOOP" -eq "$EKS_STATUS_COUNT" ]
     then
         echo "Tried too many times to connect with kubectl...Status Loop = $EKS_STATUS_LOOP -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "Tried too many times to connect with kubectl...Status Loop = $EKS_STATUS_LOOP -- EXITING"
         exit 1
     fi
 done
@@ -108,13 +114,14 @@ done
 if [ ! "$EKS_STATUS" -ge 3 ]
 then
         echo "Can not communicate with EKS cluster, number of EKS workers nodes = $EKS_STATUS -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "Can not communicate with EKS cluster, number of EKS workers nodes = $EKS_STATUS -- EXITING"
         exit 1
 fi
 
 #create a default Kubernetes storage class for EKS version <1.11
 if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
 then
-        kubectl apply -f /root/install/storage-class.yaml
+        kubectl apply -f $STORAGE_YAML
         
 fi
 
@@ -144,7 +151,7 @@ cp linux-amd64/helm /usr/bin
 chmod 755 /usr/bin/helm
 
 #apply the helm role to our EKS Cluster
-kubectl apply -f /root/install/helm.yaml
+kubectl apply -f $HELM_YAML
 
 #initialize helm in our EKS Cluster
 helm init --service-account tiller
@@ -178,6 +185,7 @@ then
                 if [ "$TILLER_LOOP_COUNT" -eq "TILLER_LOOP_TOTAL" ]
                 then
                         echo "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
+                        bash /root/install/signal-final-status.sh 1 "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
                         exit 1
                 fi
         done
@@ -230,6 +238,7 @@ ECR_REPOS=$(aws ecr describe-repositories --region $REGION --output text | wc -l
 if [ "$ECR_REPOS" -lt "$ECR_REPOS_COUNT" ]
 then
         echo "Not all ECR repositories create. $$ECR_REPOS out of a total of $ECR_REPOS_COUNT created -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "Not all ECR repositories create. $$ECR_REPOS out of a total of $ECR_REPOS_COUNT created -- EXITING"
         exit 1
 fi
 
@@ -240,6 +249,7 @@ ECR_LOGIN=$(bash /tmp/ecr.sh | grep -i "succeeded" )
 if [ -z "$ECR_LOGIN" ]
 then
         echo "Could not log into the ECR repository -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "Could not log into the ECR repository -- EXITING"
         exit 1
 fi
 
@@ -255,15 +265,26 @@ cd "$SDH_SW_TARGET"
 
 bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
 
-#validate SAP Data Hub installation
+#deploy the Ingress controller
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
 
+sed -i "/MYHOSTDOMAIN""/ c\"${SDH_CERT_DOMAIN_NAM}""  $INGRESS_YAML
+
+kubectl apply -f $INGRESS_YAML
+
+#validate SAP Data Hub installation
 SDH_PODS=$(kubectl get pods -n datahub | wc -l)
 
 if [ "$SDH_PODS" -gt 50 ]
 then
         echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
+        bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
+
 else
         echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
         exit 1      
 fi
 

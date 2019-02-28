@@ -1,4 +1,4 @@
-﻿#!/bin/bash -x
+#!/bin/bash -x
 
 #
 # ------------------------------------------------------------------
@@ -61,9 +61,9 @@ MSG="$2"
 log $(date) signal-final-status.sh
 
 if [ "${SIGNAL}" == "0" ]; then
-   /tmp/aws/bin/cfn-signal -e "$SIGNAL" -r "$MSG" "${WaitForSDHInstallWaitHandle}"
+   /tmp/aws/bin/cfn-signal -e "$SIGNAL" -r "$MSG" "${WAITFORSDHINSTALLWAITHANDLE}"
 else
-   /tmp/aws/bin/cfn-signal -e "$SIGNAL" -r "$MSG" "${WaitForSDHInstallWaitHandle}"
+   /tmp/aws/bin/cfn-signal -e "$SIGNAL" -r "$MSG" "${WAITFORSDHINSTALLWAITHANDLE}"
 fi
 
 log $(date) END signal-final-staus.sh

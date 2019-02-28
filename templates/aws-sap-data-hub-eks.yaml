@@ -376,6 +376,8 @@ Resources:
 
                     ', export SDH_CERT_DOMAIN_NAME=, !Ref 'SDHCertDomainName', '
 
+                    ', export WAITFORSDHINSTALLWAITHANDLE=, !Ref 'WaitForSDHInstallWaitHandle', '
+
                     ', export REGION=, !Ref 'AWS::Region', '
                     ']]
                mode: 000500
@@ -383,6 +385,12 @@ Resources:
                group: root                
             "/root/install/sdh-install.sh": 
                source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/sdh-install.sh'
+               mode: 000500
+               owner: root
+               group: root
+               authentication: S3AccessCreds
+            "/root/install/signal-final-status.sh": 
+               source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/signal-final-status.sh'
                mode: 000500
                owner: root
                group: root
@@ -462,6 +470,15 @@ Resources:
         -
           Key: Name
           Value: SDH Installation Host ENI
+  WaitForSDHInstallWaitHandle:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Properties: {}
+  WaitForSDHInstall:
+    Type: AWS::CloudFormation::WaitCondition
+    DependsOn: SDHInstance
+    Properties:
+      Handle: !Ref WaitForSDHInstallWaitHandle
+      Timeout: '4500'
   ECRVoraDqp:
     Condition: CreateECR
     Type: AWS::ECR::Repository
