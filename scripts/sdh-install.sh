@@ -258,36 +258,55 @@ ECR_NAME=$(aws ecr describe-repositories --region $REGION --output text | tail -
 #cd to the s/w location
 cd "$SDH_SW_TARGET" 
 
-
-#start the SAP Data Hub silent installation
-#bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
-
-
-bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
-
-#deploy the Ingress controller
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
-
-sed -i "/MYHOSTDOMAIN/ c\${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
-
-kubectl apply -f $INGRESS_YAML
-
-#validate SAP Data Hub installation
-SDH_PODS=$(kubectl get pods -n datahub | wc -l)
-
-if [ "$SDH_PODS" -gt 50 ]
+if [ "$SDH_INSTALL" != "true" ]
 then
-        echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-        bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-
+        echo "SDH_INSTALL is set to $SDH_INSTALL. EXITING"
+        bash /root/install/signal-final-status.sh 1 "SDH_INSTALL is set to $SDH_INSTALL. EXITING"
+        exit 1
 else
-        echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
-        exit 1      
-fi
 
-#remove the password from the execution logs
-sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
-sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+        #start the SAP Data Hub silent installation
+        #bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
+
+
+        bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
+
+        #deploy the Ingress controller
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
+
+        sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
+        sed -i "/MYHOSTDOMAIN2/ c\    - ${SDH_CERT_DOMAIN_NAME}"      "$INGRESS_YAML"
+
+        kubectl apply -f $INGRESS_YAML
+
+        #validate the ingress
+        SDH_INGRESS_COUNT=$(kubectl get ing | grep vsystem | wc -l)
+        SDH_INGRESS_NAME=$(kubectl get ing | grep vsystem | awk '{ print $1 }' )
+
+        if [ "$SDH_INGRESS_COUNT" -ge 1 ]
+        then
+                echo "The ingress $SDH_INGRESS_NAME was created successfully"
+        else
+                echo "The ingress $SDH_INGRESS_NAME was *NOT* created successfully"
+        fi
+
+        #validate SAP Data Hub installation
+        SDH_PODS=$(kubectl get pods -n datahub | wc -l)
+
+        if [ "$SDH_PODS" -gt 50 ]
+        then
+                echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
+                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
+
+        else
+                echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
+                bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
+                exit 1      
+        fi
+
+        #remove the password from the execution logs
+        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+fi

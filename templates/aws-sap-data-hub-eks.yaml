@@ -23,6 +23,7 @@ Metadata:
       - Label:
           default: SDH Installation Host configuration
         Parameters:
+          - SDHInstall
           - SDHVersion
           - SDHSwS3BucketName
           - SDHSwS3PrefixName
@@ -68,6 +69,8 @@ Metadata:
         default: VPC ID
       KubernetesVersion:
         default: Kubernetes version
+      SDHInstall:
+        default: Install the SAP Data Hub?
       SDHVersion:
         default: SAP Data Hub version
       SDHSwS3BucketName:
@@ -155,6 +158,11 @@ Parameters:
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
     Description: The CIDR IP range that is permitted to access the SDH instances. We recommend that you set this value to a trusted IP range.
     Type: String
+  SDHInstall:
+    Type: String
+    Description: "Do you want to run the SDH installation? Setting to false will provision everthing and get ready for a manual installation."
+    AllowedValues: [true, false]
+    Default: true
   SDHVersion:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]
@@ -359,6 +367,8 @@ Resources:
                     ', export EKS_CLUSTER_NAME=, !Ref 'EKSClusterName', '
 
                     ', export EKS_CLUSTER_VERSION=, !Ref 'KubernetesVersion', '
+
+                    ', export SDH_INSTALL=, !Ref 'SDHInstall', '
 
                     ', export SDH_VERSION=, !Ref 'SDHVersion', '
 

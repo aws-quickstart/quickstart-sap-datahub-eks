@@ -16,7 +16,7 @@ metadata:
   name: vsystem
 spec:
   rules:
-  - host: MYHOSTDOMAIN
+  - host: MYHOSTDOMAIN1
     http:
       paths:
       - backend:
@@ -25,5 +25,5 @@ spec:
         path: /
   tls:
   - hosts:
-    - MYHOSTDOMAIN
+    - MYHOSTDOMAIN2
     secretName: vsystem-tls-certs
