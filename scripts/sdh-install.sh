@@ -270,7 +270,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/mast
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
 
-sed -i "/MYHOSTDOMAIN""/ c\"${SDH_CERT_DOMAIN_NAM}""  $INGRESS_YAML
+sed -i "/MYHOSTDOMAIN/ c\${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
 
 kubectl apply -f $INGRESS_YAML
 
@@ -284,7 +284,7 @@ then
 
 else
         echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
+        bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
         exit 1      
 fi
 

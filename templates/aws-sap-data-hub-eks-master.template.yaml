@@ -291,7 +291,7 @@ Parameters:
     Type: String
     AllowedValues: [ "1.11", "1.10" ]
     Description: Configures the version of kubernetes deployed in the Amazon EKS control plane
-    Default: "1.11"
+    Default: "1.10"
   SDHVersion:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]

@@ -376,7 +376,7 @@ Resources:
 
                     ', export SDH_CERT_DOMAIN_NAME=, !Ref 'SDHCertDomainName', '
 
-                    ', export WAITFORSDHINSTALLWAITHANDLE=, !Ref 'WaitForSDHInstallWaitHandle', '
+                    ', export WAITFORSDHINSTALLWAITHANDLE=, !Sub '"${WaitForSDHInstallWaitHandle}"', '
 
                     ', export REGION=, !Ref 'AWS::Region', '
                     ']]
@@ -484,7 +484,7 @@ Resources:
     DependsOn: SDHInstance
     Properties:
       Handle: !Ref WaitForSDHInstallWaitHandle
-      Timeout: '4500'
+      Timeout: '10800'
   ECRVoraDqp:
     Condition: CreateECR
     Type: AWS::ECR::Repository
