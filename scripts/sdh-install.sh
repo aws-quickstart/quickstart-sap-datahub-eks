@@ -21,6 +21,8 @@ INGRESS_YAML="/root/install/ingress.yaml"
 STORAGE_YAML="/root/install/storage-class.yaml"
 ###END-Global Variables###
 
+#install nslookup
+yum -y install bind-utils
 
 #source our configuration file
 source /root/install/config
@@ -274,7 +276,7 @@ else
 
         #create custom cert for the Ingress controller
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=*${SDH_CERT_DOMAIN_NAME}"
-                kubectl -n $SDH_NAME_SPACE create secret tls vsystem-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
+        kubectl -n $SDH_NAME_SPACE create secret tls vsystem-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
 
 
         #deploy the Ingress controller
@@ -288,8 +290,8 @@ else
         kubectl apply -f "$INGRESS_YAML" -n "$SDH_NAME_SPACE"
 
         #validate the ingress
-        SDH_INGRESS_COUNT=$(kubectl get ing | grep vsystem | wc -l)
-        SDH_INGRESS_NAME=$(kubectl get ing | grep vsystem | awk '{ print $1 }' )
+        SDH_INGRESS_COUNT=$(kubectl get ing -n "$SDH_NAME_SPACE" | grep vsystem | wc -l)
+        SDH_INGRESS_NAME=$(kubectl get ing -n "$SDH_NAME_SPACE" | grep vsystem | awk '{ print $1 }' )
 
         if [ "$SDH_INGRESS_COUNT" -ge 1 ]
         then
@@ -298,13 +300,16 @@ else
                 echo "The ingress $SDH_INGRESS_NAME was *NOT* created successfully"
         fi
 
+        ELB_DNS_NAME=$(kubectl describe ing -n "$SDH_NAME_SPACE" | grep Address | awk '{ print $2 }')
+        ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#")
+
         #validate SAP Data Hub installation
         SDH_PODS=$(kubectl get pods -n datahub | wc -l)
 
         if [ "$SDH_PODS" -gt 50 ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
+                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS and ELB IP Addresses: $ELB_IP_ADDRESS" "
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
