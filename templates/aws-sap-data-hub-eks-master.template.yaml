@@ -41,6 +41,7 @@ Metadata:
           - SDHVoraPass
           - SDHNameSpace
           - SDHCertDomainName
+          - SDHELBPrivatePublic
           - NodeInstanceTypeSDH
           - NodeVolumeSizeSDH
       - Label:
@@ -97,8 +98,10 @@ Metadata:
         default: S3 Prefix name of SAP Data Hub s/w
       SDHEcrRepo:
         default: Create AWS ECR repo for SAP Data Hub
+      SDHELBPrivatePublic:
+        default: Create Private or Public ELB for SAP Data Hub
       SDHNameSpace:
-        default: Kubernetes Name Space for your SAP Data Hub system
+        default: Kubernetes Name Space for SAP Data Hub
       SDHSUserId:
         default: SAP S-User Id.
       SDHSUserPass:
@@ -106,7 +109,7 @@ Metadata:
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
       SDHCertDomainName:
-        default: SAP Data Hub Domain Name
+        default: SAP Data Hub Domain Name 
 Parameters:
   AvailabilityZones:
     Description: List of Availability Zones to use for the subnets in the VPC. Three
@@ -295,7 +298,7 @@ Parameters:
   SDHVersion:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]
-    Description: Configures the version of SAP Data Hub deployed in the Amazon EKS cluster
+    Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
     Default: "2.4"
   SDHSwS3BucketName:
     Type: String
@@ -310,6 +313,11 @@ Parameters:
     Description: "AWS ECR repo to store your SAP Data Hub images. If set to *true*, the repos will be created for you. Set to *false* if you've already created the AWS ECR repos."
     AllowedValues: [true, false]
     Default: true
+  SDHELBPrivatePublic:
+    Type: String
+    Description: "AWS ELB type for your SAP Data Hub Ingress. If set to *PRIVATE*, an ELB is created in your private subnet. If *PUBLIC*, an ELB is created in your public subnet."
+    AllowedValues: [PRIVATE, PUBLIC]
+    Default: PRIVATE
   SDHNameSpace:
     Type: String
     Description: Your SAP Data Hub kubernetes Name Space
@@ -328,7 +336,7 @@ Parameters:
     Description: The password for the Vora user in your SAP Data Hub system.
   SDHCertDomainName:
     Type: String
-    Description: The domain you want to use for your SAP Data Hub system 
+    Description: Domain you want to use for your SAP Data Hub Ingress (TLS cert) 
     Default: "my-sdh.com"
 Rules:
   EKSSupport:
@@ -394,6 +402,7 @@ Resources:
         SDHSwS3BucketName: !Ref SDHSwS3BucketName
         SDHSwS3PrefixName: !Ref SDHSwS3PrefixName
         SDHEcrRepo: !Ref SDHEcrRepo
+        SDHELBPrivatePublic: !Ref SDHELBPrivatePublic
         SDHNameSpace: !Ref SDHNameSpace
         SDHSUserId: !Ref SDHSUserId
         SDHSUserPass: !Ref SDHSUserPass

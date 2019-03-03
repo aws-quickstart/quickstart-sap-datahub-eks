@@ -280,6 +280,7 @@ else
 
 
         #deploy the Ingress controller
+        #for a public internet-facing ELB
         kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
         kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
         kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
@@ -301,7 +302,7 @@ else
         do
                 sleep 30
                 let ELB_LOOP_COUNT="$ELB_LOOP_COUNT + 1"
-                if [ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAl" ]
+                if [ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAL" ]
                 then
                         echo "The ELB is not available -- EXITING"
                         bash /root/install/signal-final-status.sh 1 "The ELB is not available -- EXITING"
@@ -337,7 +338,7 @@ else
         if [ "$SDH_PODS" -gt 50 ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS and ELB IP Addresses: $ELB_IP_ADDRESS" "
+                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS and ELB IP Addresses: $ELB_IP_ADDRESS"
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
@@ -346,6 +347,6 @@ else
         fi
 
         #remove the password from the execution logs
-        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
-        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+        #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+        #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
 fi
