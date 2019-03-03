@@ -287,6 +287,34 @@ else
         sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
         sed -i "/MYHOSTDOMAIN2/ c\    - ${SDH_CERT_DOMAIN_NAME}"      "$INGRESS_YAML"
 
+
+        #for private ELB
+        kubectl apply -f /root/install/private-elb.yaml
+
+        #wait for the ELB to be created by the service-14.yaml
+        ELB_STATUS=$(kubectl get svc --all-namespaces | grep -i nginx | awk '{ print $5 }')
+
+        ELB_LOOP_TOTAL="15"
+        ELB_LOOP_COUNT="0"
+
+        while [ "$ELB_STATUS" == "<pending>" ]
+        do
+                sleep 30
+                let ELB_LOOP_COUNT="$ELB_LOOP_COUNT + 1"
+                if [ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAl" ]
+                then
+                        echo "The ELB is not available -- EXITING"
+                        bash /root/install/signal-final-status.sh 1 "The ELB is not available -- EXITING"
+                        exit 1      
+        
+                fi
+                ELB_STATUS=$(kubectl get svc --all-namespaces | grep -i ngi | awk '{ print $5 }')
+        done
+
+        #delete any existing ingress first
+        kubectl delete ing vsystem -n "$SDH_NAME_SPACE"
+
+        #create the Ingress
         kubectl apply -f "$INGRESS_YAML" -n "$SDH_NAME_SPACE"
 
         #validate the ingress
