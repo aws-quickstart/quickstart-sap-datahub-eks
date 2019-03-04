@@ -414,7 +414,7 @@ Resources:
                group: root
                authentication: S3AccessCreds
             "/root/install/private-elb.yaml": 
-               source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/private-elb'
+               source: !Sub 'http://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}scripts/private-elb.yaml'
                mode: 000500
                owner: root
                group: root
