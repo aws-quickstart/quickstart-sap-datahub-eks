@@ -392,6 +392,8 @@ Resources:
 
                     ', export SDH_NAME_SPACE=, !Ref 'SDHNameSpace', '
 
+                    ', export SDH_ELB_PRIVPUB=, !Ref 'SDHELBPrivatePublic', '
+
                     ', export SDH_CERT_DOMAIN_NAME=, !Ref 'SDHCertDomainName', '
 
                     ', export WAITFORSDHINSTALLWAITHANDLE=, !Sub '"${WaitForSDHInstallWaitHandle}"', '

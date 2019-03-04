@@ -263,8 +263,8 @@ cd "$SDH_SW_TARGET"
 if [ "$SDH_INSTALL" != "true" ]
 then
         echo "SDH_INSTALL is set to $SDH_INSTALL. EXITING"
-        bash /root/install/signal-final-status.sh 1 "SDH_INSTALL is set to $SDH_INSTALL. EXITING"
-        exit 1
+        bash /root/install/signal-final-status.sh 0 "SDH_INSTALL is set to "$SDH_INSTALL". Provisioning is complete."
+        exit 0
 else
 
         #start the SAP Data Hub silent installation
@@ -281,17 +281,20 @@ else
 
         #deploy the Ingress controller
         #for a public internet-facing ELB
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
-
-        sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
-        sed -i "/MYHOSTDOMAIN2/ c\    - ${SDH_CERT_DOMAIN_NAME}"      "$INGRESS_YAML"
-
+        if [ "$SDH_ELB_PRIVPUB" == "PUBLIC" ]
+        then
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/service-l4.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
+        fi
 
         #for private ELB
-        kubectl apply -f /root/install/private-elb.yaml
+        if [ "$SDH_ELB_PRIVPUB" == "PRIVATE" ]
+        then
+                kubectl apply -f /root/install/private-elb.yaml
+        fi
 
+        
         #wait for the ELB to be created by the service-14.yaml
         ELB_STATUS=$(kubectl get svc --all-namespaces | grep -i nginx | awk '{ print $5 }')
 
@@ -305,18 +308,26 @@ else
                 if [[ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAL" ]]
                 then
                         echo "The ELB is not available -- EXITING"
-                        bash /root/install/signal-final-status.sh 1 "The ELB is not available -- EXITING"
+                        bash /root/install/signal-final-status.sh 1 "The ELB is not available STATUS = "$ELB_STATUS" -- EXITING"
                         exit 1      
         
                 fi
                 ELB_STATUS=$(kubectl get svc --all-namespaces | grep -i ngi | awk '{ print $5 }')
         done
 
+        #confiugre the ingress.yaml file        
+        sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
+        sed -i "/MYHOSTDOMAIN2/ c\    - ${SDH_CERT_DOMAIN_NAME}"      "$INGRESS_YAML"
+
         #delete any existing ingress first
         kubectl delete ing vsystem -n "$SDH_NAME_SPACE"
 
+        sleep 15
+
         #create the Ingress
         kubectl apply -f "$INGRESS_YAML" -n "$SDH_NAME_SPACE"
+
+        sleep 30
 
         #validate the ingress
         SDH_INGRESS_COUNT=$(kubectl get ing -n "$SDH_NAME_SPACE" | grep vsystem | wc -l)
@@ -329,6 +340,9 @@ else
                 echo "The ingress $SDH_INGRESS_NAME was *NOT* created successfully"
         fi
 
+        sleep 15
+
+        #lookup the IP Address of the ELB associated with the Kubernetes Ingress
         ELB_DNS_NAME=$(kubectl describe ing -n "$SDH_NAME_SPACE" | grep Address | awk '{ print $2 }')
         ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#")
 
@@ -338,11 +352,11 @@ else
         if [ "$SDH_PODS" -gt 50 ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS and ELB IP Addresses: $ELB_IP_ADDRESS"
+                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = "$SDH_PODS" and ELB IP Addresses: "$ELB_IP_ADDRESS" "
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
-                bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
+                bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = "$SDH_PODS" - EXITING"
                 exit 1      
         fi
 
