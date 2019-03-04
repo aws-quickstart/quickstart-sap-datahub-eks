@@ -439,7 +439,7 @@ Resources:
                authentication: S3AccessCreds
           commands: 
               startinstall: 
-                command: "dos2unix /root/install/sdh-install.sh; bash /root/install/sdh-install.sh"
+                command: "dos2unix /root/install/sdh-install.sh; bash -xv /root/install/sdh-install.sh"
     Properties:
       InstanceType: !Ref NodeInstanceTypeSDH
       NetworkInterfaces:

@@ -31,6 +31,7 @@ Metadata:
       - Label:
           default: SAP Data Hub Configuration
         Parameters:
+          - SDHInstall
           - SDHVersion
           - SDHSwS3BucketName
           - SDHSwS3PrefixName
@@ -90,6 +91,8 @@ Metadata:
         default: Additional EKS admin ARNs
       KubernetesVersion:
         default: Kubernetes version
+      SDHInstall:
+        default: Install the SAP Data Hub?
       SDHVersion:
         default: SAP Data Hub version
       SDHSwS3BucketName:
@@ -269,6 +272,11 @@ Parameters:
     AllowedValues: [ "1.11", "1.10" ]
     Default: "1.11"
     Description: Configures the version of kubernetes deployed in the Amazon EKS control plane
+  SDHInstall:
+    Type: String
+    Description: "Do you want to run the SDH installation? Setting to false will provision everthing and get ready for a manual installation."
+    AllowedValues: [true, false]
+    Default: true
   SDHVersion:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]

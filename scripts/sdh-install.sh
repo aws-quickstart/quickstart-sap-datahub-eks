@@ -177,14 +177,14 @@ TILLER_LOOP_TOTAL="10"
 
 if [ "$HELM_POD_STATUS" != "Running" ]
 then
-        until [ "$TILLER_LOOP_COUNT" -ge "TILLER_LOOP_TOTAL" ]
+        until [[ "$TILLER_LOOP_COUNT" -ge "TILLER_LOOP_TOTAL" ]]
         do
                 echo "Waiting for tiller pod to become Running"
                 sleep 15
                 let TILLER_LOOP_COUNT="$TILLER_LOOP_COUNT + 1"
 
                 #Check to see we have exeucted the TILLER_LOOP_TOTAL, if we have then exit
-                if [ "$TILLER_LOOP_COUNT" -eq "TILLER_LOOP_TOTAL" ]
+                if [[ "$TILLER_LOOP_COUNT" -eq "TILLER_LOOP_TOTAL" ]]
                 then
                         echo "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
                         bash /root/install/signal-final-status.sh 1 "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
@@ -302,7 +302,7 @@ else
         do
                 sleep 30
                 let ELB_LOOP_COUNT="$ELB_LOOP_COUNT + 1"
-                if [ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAL" ]
+                if [[ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAL" ]]
                 then
                         echo "The ELB is not available -- EXITING"
                         bash /root/install/signal-final-status.sh 1 "The ELB is not available -- EXITING"
