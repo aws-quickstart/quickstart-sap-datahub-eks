@@ -361,6 +361,6 @@ else
         fi
 
         #remove the password from the execution logs
-        #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
-        #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
 fi

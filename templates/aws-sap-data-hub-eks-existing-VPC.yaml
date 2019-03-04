@@ -416,6 +416,7 @@ Resources:
         VPCID: !Ref VPCID
         EKSClusterName: !GetAtt EKSStack.Outputs.EKSClusterName
         KubernetesVersion: !Ref KubernetesVersion
+        SDHInstall: !Ref SDHInstall
         SDHVersion: !Ref SDHVersion
         SDHSwS3BucketName: !Ref SDHSwS3BucketName
         SDHSwS3PrefixName: !Ref SDHSwS3PrefixName

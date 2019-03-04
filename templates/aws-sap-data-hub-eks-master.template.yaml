@@ -402,10 +402,13 @@ Resources:
         NodeGroupName: !Ref NodeGroupName
         NodeVolumeSize: !Ref NodeVolumeSize
         NodeInstanceType: !Ref NodeInstanceType
+        NodeVolumeSizeSDH: !Ref NodeVolumeSizeSDH
+        NodeInstanceTypeSDH: !Ref NodeInstanceTypeSDH
         RemoteAccessCIDR: !Ref RemoteAccessCIDR
         AdditionalEKSAdminArns: !Join [ ",", !Ref AdditionalEKSAdminArns ]
         VPCID: !GetAtt VPCStack.Outputs.VPCID
         KubernetesVersion: !Ref KubernetesVersion
+        SDHInstall: !Ref SDHInstall
         SDHVersion: !Ref SDHVersion
         SDHSwS3BucketName: !Ref SDHSwS3BucketName
         SDHSwS3PrefixName: !Ref SDHSwS3PrefixName
