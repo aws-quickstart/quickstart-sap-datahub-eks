@@ -311,7 +311,7 @@ else
         do
                 sleep 30
                 let ELB_LOOP_COUNT="$ELB_LOOP_COUNT + 1"
-                if [[ "$ELB_LOOP_COUNT" -ge "ELB_LOOP_TOTAL" ]]
+                if [[ "$ELB_LOOP_COUNT" -ge "$ELB_LOOP_TOTAL" ]]
                 then
                         echo "The ELB is not available -- EXITING"
                         bash /root/install/signal-final-status.sh 1 "The ELB is not available STATUS = "$ELB_STATUS" -- EXITING"
@@ -344,9 +344,15 @@ else
                 echo "The ingress $SDH_INGRESS_NAME was created successfully"
         else
                 echo "The ingress $SDH_INGRESS_NAME was *NOT* created successfully"
+                bash /root/install/signal-final-status.sh 1 "The ingress $SDH_INGRESS_NAME was *NOT* created successfully - EXITING. Your SAP Data Hub have been successfully deployed. Please log into your SDH Install host and run check."
+                #remove the password from the execution logs
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+                exit 1      
+
         fi
 
-        sleep 15
+        sleep 30
 
         #lookup the IP Address of the ELB associated with the Kubernetes Ingress
         ELB_DNS_NAME=$(kubectl describe ing -n "$SDH_NAME_SPACE" | grep Address | awk '{ print $2 }')
@@ -359,14 +365,18 @@ else
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
                 bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = "$SDH_PODS" and ELB IP Addresses: "$ELB_IP_ADDRESS" "
+                #remove the password from the execution logs
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
                 bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = "$SDH_PODS" - EXITING"
+                #remove the password from the execution logs
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
+                #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
                 exit 1      
         fi
 
-        #remove the password from the execution logs
-        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
-        sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
+
 fi

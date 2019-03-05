@@ -135,7 +135,7 @@ Parameters:
   KubernetesVersion:
     Type: String
     AllowedValues: [ "1.11", "1.10" ]
-    Default: "1.10"
+    Default: "1.11"
     Description: Your existing EKS version
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -170,7 +170,7 @@ Parameters:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
-    Default: "2.4"
+    Default: "2.4.1"
   SDHSwS3BucketName:
     Type: String
     Description: The name of your S3 bucket where your SAP Data Hub software is stored. Do *NOT* include s3:// (use just your bucket name)
@@ -441,7 +441,7 @@ Resources:
                authentication: S3AccessCreds
           commands: 
               startinstall: 
-                command: "dos2unix /root/install/sdh-install.sh; bash /root/install/sdh-install.sh"
+                command: "dos2unix /root/install/sdh-install.sh; bash -xv /root/install/sdh-install.sh"
     Properties:
       InstanceType: !Ref NodeInstanceTypeSDH
       NetworkInterfaces:

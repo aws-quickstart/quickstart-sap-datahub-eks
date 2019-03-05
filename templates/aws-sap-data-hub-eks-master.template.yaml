@@ -297,7 +297,7 @@ Parameters:
     Type: String
     AllowedValues: [ "1.11", "1.10" ]
     Description: Configures the version of kubernetes deployed in the Amazon EKS control plane
-    Default: "1.10"
+    Default: "1.11"
   SDHInstall:
     Type: String
     Description: "Do you want to run the SDH installation? Setting to false will provision everthing and get ready for a manual installation."
@@ -307,7 +307,7 @@ Parameters:
     Type: String
     AllowedValues: [ "2.4", "2.41" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
-    Default: "2.4"
+    Default: "2.4.1"
   SDHSwS3BucketName:
     Type: String
     Description: The name of your S3 bucket where your SAP Data Hub software is stored. Do *NOT* include s3:// (use just your bucket name)
