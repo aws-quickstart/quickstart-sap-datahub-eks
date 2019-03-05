@@ -356,12 +356,12 @@ else
 
         #lookup the IP Address of the ELB associated with the Kubernetes Ingress
         ELB_DNS_NAME=$(kubectl describe ing -n "$SDH_NAME_SPACE" | grep Address | awk '{ print $2 }')
-        ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#")
+        ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#" | awk '{ print $2 }' | tail -1)
 
         #validate SAP Data Hub installation
         SDH_PODS=$(kubectl get pods -n datahub | wc -l)
 
-        if [ "$SDH_PODS" -gt "$SDH_TOTAL_PODS" ]
+        if [ "$SDH_PODS" -ge "$SDH_TOTAL_PODS" ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
                 bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = "$SDH_PODS" and ELB IP Addresses: "$ELB_IP_ADDRESS" "
