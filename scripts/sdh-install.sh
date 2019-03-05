@@ -11,7 +11,7 @@
 
 
 ###BEGIN-Global Variables###
-CONFIG_FILE"/root/install/config"
+CONFIG_FILE="/root/install/config"
 SDH_SW_TARGET="/tmp/SDH"
 #this is the min. size the s/w should be when downloaded
 SDH_TOTAL_SIZE="1840408"
