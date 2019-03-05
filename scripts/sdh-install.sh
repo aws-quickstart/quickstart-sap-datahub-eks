@@ -295,7 +295,9 @@ else
         #for private ELB
         if [ "$SDH_ELB_PRIVPUB" == "PRIVATE" ]
         then
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/mandatory.yaml
                 kubectl apply -f /root/install/private-elb.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/provider/aws/patch-configmap-l4.yaml
         fi
 
         
