@@ -356,7 +356,27 @@ else
 
         #lookup the IP Address of the ELB associated with the Kubernetes Ingress
         ELB_DNS_NAME=$(kubectl describe ing -n "$SDH_NAME_SPACE" | grep Address | awk '{ print $2 }')
+        
+        sleep 15
+
         ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#" | awk '{ print $2 }' | tail -1)
+
+        #check if we have a good IP address
+        ELB_LOOP_IP_COUNT="0"
+        ELB_LOOP_IP_TOTAL="10"
+
+        if [ -z "$ELB_IP_ADDRESS" ]
+        then
+                #IP address is empty, retrying
+                let ELB_LOOP_IP_COUNT="$ELB_LOOP_IP_COUNT + 1"
+                if [[ "$ELB_LOOP_IP_COUNT" -ge "$ELB_LOOP_IP_TOTAL" ]]
+                then
+                        echo "The ELB IP Address is not available."
+        
+                fi
+                sleep 15
+                ELB_IP_ADDRESS=$(nslookup "$ELB_DNS_NAME" | grep Address | grep -v "#" | awk '{ print $2 }' | tail -1)
+        fi
 
         #validate SAP Data Hub installation
         SDH_PODS=$(kubectl get pods -n datahub | wc -l)
