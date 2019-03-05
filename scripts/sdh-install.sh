@@ -11,11 +11,13 @@
 
 
 ###BEGIN-Global Variables###
+CONFIG_FILE"/root/install/config"
 SDH_SW_TARGET="/tmp/SDH"
 #this is the min. size the s/w should be when downloaded
 SDH_TOTAL_SIZE="1840408"
 #this is the min. number of ECR repositories that should be created
 ECR_REPOS_COUNT="30"
+SDH_TOTAL_PODS="50"
 HELM_YAML="/root/install/helm.yaml"
 INGRESS_YAML="/root/install/ingress.yaml"
 STORAGE_YAML="/root/install/storage-class.yaml"
@@ -24,12 +26,14 @@ STORAGE_YAML="/root/install/storage-class.yaml"
 #install nslookup
 yum -y install bind-utils
 
+sed -i '/config/d' "$CONFIG_FILE"
+
 #source our configuration file
-source /root/install/config
+source "$CONFIG_FILE"
 
 #remove the password after we have read it in
-sed -i '/SDH_S_USER_PASS/d' /root/install/config
-sed -i '/SDH_VORA_PASS/d'  /root/install/config
+sed -i '/SDH_S_USER_PASS/d' "$CONFIG_FILE"
+sed -i '/SDH_VORA_PASS/d'  "$CONFIG_FILE"
 
 #set variables based on which SAP Data Hub version we are installing
 
@@ -349,7 +353,7 @@ else
         #validate SAP Data Hub installation
         SDH_PODS=$(kubectl get pods -n datahub | wc -l)
 
-        if [ "$SDH_PODS" -gt 50 ]
+        if [ "$SDH_PODS" -gt "$SDH_TOTAL_PODS" ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
                 bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = "$SDH_PODS" and ELB IP Addresses: "$ELB_IP_ADDRESS" "
