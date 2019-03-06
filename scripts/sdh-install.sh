@@ -47,7 +47,7 @@ then
                 echo "Choose SAP Data Hub version *2.4.1* if you want to run EKS version *1.11*"
                 echo "Check the SAP Data Hub Platform Availability Matrix for supported combinations"
                 echo "https://support.sap.com/content/dam/launchpad/en_us/pam/pam-essentials/SAP_Data_Hub_2_PAM.pdf"
-                bash /root/install/signal-final-status.sh 1 "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
+                bash -x /root/install/signal-final-status.sh 1 "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
                 exit 1
         fi
 else
@@ -88,7 +88,7 @@ INSTALL_SH=$(find . -name install.sh)
 if [ ! -f "$INSTALL_SH" ]
 then
         echo "Can not find install.sh file, $INSTALL_SH -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "Can not find install.sh file, $INSTALL_SH -- EXITING"
+        bash -x /root/install/signal-final-status.sh 1 "Can not find install.sh file, $INSTALL_SH -- EXITING"
         exit 1
 fi
 
@@ -111,7 +111,7 @@ do
     if [ "$EKS_STATUS_LOOP" -eq "$EKS_STATUS_COUNT" ]
     then
         echo "Tried too many times to connect with kubectl...Status Loop = $EKS_STATUS_LOOP -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "Tried too many times to connect with kubectl...Status Loop = $EKS_STATUS_LOOP -- EXITING"
+        bash -x /root/install/signal-final-status.sh 1 "Tried too many times to connect with kubectl...Status Loop = $EKS_STATUS_LOOP -- EXITING"
         exit 1
     fi
 done
@@ -120,7 +120,7 @@ done
 if [ ! "$EKS_STATUS" -ge 3 ]
 then
         echo "Can not communicate with EKS cluster, number of EKS workers nodes = $EKS_STATUS -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "Can not communicate with EKS cluster, number of EKS workers nodes = $EKS_STATUS -- EXITING"
+        bash -x /root/install/signal-final-status.sh 1 "Can not communicate with EKS cluster, number of EKS workers nodes = $EKS_STATUS -- EXITING"
         exit 1
 fi
 
@@ -191,7 +191,7 @@ then
                 if [[ "$TILLER_LOOP_COUNT" -eq "TILLER_LOOP_TOTAL" ]]
                 then
                         echo "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
-                        bash /root/install/signal-final-status.sh 1 "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
+                        bash -x /root/install/signal-final-status.sh 1 "Checked for tiller running a total of $TILLER_LOOP_COUNT times, EXITING"
                         exit 1
                 fi
         done
@@ -244,7 +244,7 @@ ECR_REPOS=$(aws ecr describe-repositories --region $REGION --output text | wc -l
 if [ "$ECR_REPOS" -lt "$ECR_REPOS_COUNT" ]
 then
         echo "Not all ECR repositories create. $$ECR_REPOS out of a total of $ECR_REPOS_COUNT created -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "Not all ECR repositories create. $$ECR_REPOS out of a total of $ECR_REPOS_COUNT created -- EXITING"
+        bash -x /root/install/signal-final-status.sh 1 "Not all ECR repositories create. $$ECR_REPOS out of a total of $ECR_REPOS_COUNT created -- EXITING"
         exit 1
 fi
 
@@ -255,7 +255,7 @@ ECR_LOGIN=$(bash /tmp/ecr.sh | grep -i "succeeded" )
 if [ -z "$ECR_LOGIN" ]
 then
         echo "Could not log into the ECR repository -- EXITING"
-        bash /root/install/signal-final-status.sh 1 "Could not log into the ECR repository -- EXITING"
+        bash -x /root/install/signal-final-status.sh 1 "Could not log into the ECR repository -- EXITING"
         exit 1
 fi
 
@@ -267,7 +267,7 @@ cd "$SDH_SW_TARGET"
 if [ "$SDH_INSTALL" != "true" ]
 then
         echo "SDH_INSTALL is set to $SDH_INSTALL. EXITING"
-        bash /root/install/signal-final-status.sh 0 "SDH_INSTALL is set to "$SDH_INSTALL". Provisioning is complete."
+        bash -x /root/install/signal-final-status.sh 0 "SDH_INSTALL is set to $SDH_INSTALL. Provisioning is complete."
         exit 0
 else
 
@@ -314,7 +314,7 @@ else
                 if [[ "$ELB_LOOP_COUNT" -ge "$ELB_LOOP_TOTAL" ]]
                 then
                         echo "The ELB is not available -- EXITING"
-                        bash /root/install/signal-final-status.sh 1 "The ELB is not available STATUS = "$ELB_STATUS" -- EXITING"
+                        bash -x /root/install/signal-final-status.sh 1 "The ELB is not available STATUS = $ELB_STATUS -- EXITING"
                         exit 1      
         
                 fi
@@ -344,7 +344,7 @@ else
                 echo "The ingress $SDH_INGRESS_NAME was created successfully"
         else
                 echo "The ingress $SDH_INGRESS_NAME was *NOT* created successfully"
-                bash /root/install/signal-final-status.sh 1 "The ingress $SDH_INGRESS_NAME was *NOT* created successfully - EXITING. Your SAP Data Hub have been successfully deployed. Please log into your SDH Install host and run check."
+                bash -x /root/install/signal-final-status.sh 1 "The ingress $SDH_INGRESS_NAME was *NOT* created successfully - EXITING. Please log into your SDH Install host and check the installation"
                 #remove the password from the execution logs
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
@@ -384,14 +384,14 @@ else
         if [ "$SDH_PODS" -ge "$SDH_TOTAL_PODS" ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-                bash /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Number of SDH_PODS = "$SDH_PODS". Here's 1 of 3 your ELB IP Addresses: "$ELB_IP_ADDRESS" "
+                bash -x /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Here is 1 of 3 your ELB IP Addresses: $ELB_IP_ADDRESS "
                 #remove the password from the execution logs
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
-                bash /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = "$SDH_PODS" - EXITING"
+                bash -x /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
                 #remove the password from the execution logs
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
