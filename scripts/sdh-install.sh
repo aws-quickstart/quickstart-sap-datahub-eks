@@ -384,14 +384,14 @@ else
         if [ "$SDH_PODS" -ge "$SDH_TOTAL_PODS" ]
         then
                 echo "SAP Data Hub installation *successful*. Number of SDH_PODS = $SDH_PODS"
-                bash -x /root/install/signal-final-status.sh 0 "SAP Data Hub installation *successful*. Here is 1 of 3 your ELB IP Addresses: $ELB_IP_ADDRESS "
+                bash -x /root/install/signal-final-status.sh "0" "SAP Data Hub installation successful."
                 #remove the password from the execution logs
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
 
         else
                 echo "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS -- EXITING"
-                bash -x /root/install/signal-final-status.sh 1 "SAP Data Hub installation *NOT* successful. Number of SDH_PODS = $SDH_PODS - EXITING"
+                bash -x /root/install/signal-final-status.sh "1" "SAP Data Hub installation *NOT* successful -- EXITING"
                 #remove the password from the execution logs
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init-cmd.log
                 #sed -i '/${SDH_S_USER_PASS}/d' /var/log/cfn-init.log
