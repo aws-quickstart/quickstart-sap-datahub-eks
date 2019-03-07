@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: SAP Data Hub on Amazon EKS (qs-xxx)
+Description: SAP Data Hub on Amazon EKS 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
