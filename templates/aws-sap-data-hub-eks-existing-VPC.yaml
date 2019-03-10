@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: SAP Data Hub on Amazon EKS 
+Description: SAP Data Hub on Amazon EKS new VPC
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -340,7 +340,10 @@ Rules:
            - ap-south-1
         - !Ref 'AWS::Region' 
 Resources:
-  SDHIAMRole: 
+  SDHCheckPointS3Bucket:
+    Type: AWS::S3::Bucket
+  SDHIAMRole:
+    DependsOn: SDHCheckPointS3Bucket
     Type: "AWS::IAM::Role"
     Properties: 
       AssumeRolePolicyDocument: 
@@ -354,20 +357,58 @@ Resources:
             Action: 
               - "sts:AssumeRole"
       Path: "/"
-      Policies: 
-        - 
-          PolicyName: "root"
-          PolicyDocument: 
-            Version: "2012-10-17"
-            Statement: 
-              - 
-                Effect: "Allow"
-                Action: "s3:*"
+      Policies:
+        - PolicyName: SDHInstall
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:Get*
+                  - ecr:Describe*
+                  - ecr:Upload*
+                  - ecr:Initiate*
+                  - ecr:Put*
+                  - ecr:List*
+                  - ecr:Complete*
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeSubnets
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - elasticloadbalancing:Create*
+                  - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:Register*
+                  - elasticloadbalancing:SetIpAddressType
+                  - elasticloadbalancing:SetSubnets
+                  - eks:Describe*
                 Resource: "*"
-              - 
-                Effect: "Allow"
-                Action: "*"
-                Resource: "*"
+              - Effect: Allow
+                Action: 
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${QSS3BucketName}/*"
+              - Effect: Allow
+                Action: 
+                  - s3:GetObject
+                  - s3:List*
+                Resource: !Sub "arn:aws:s3:::${SDHSwS3BucketName}"
+              - Effect: Allow
+                Action: 
+                  - s3:GetObject
+                  - s3:List*
+                Resource: !Sub "arn:aws:s3:::${SDHSwS3BucketName}/*"
+              - Effect: Allow
+                Action: 
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${SDHCheckPointS3Bucket}"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "*"
   SDHInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
@@ -416,6 +457,7 @@ Resources:
         VPCID: !Ref VPCID
         EKSClusterName: !GetAtt EKSStack.Outputs.EKSClusterName
         KubernetesVersion: !Ref KubernetesVersion
+        SDHCheckPointS3Bucket: !Ref SDHCheckPointS3Bucket
         SDHInstall: !Ref SDHInstall
         SDHVersion: !Ref SDHVersion
         SDHSwS3BucketName: !Ref SDHSwS3BucketName

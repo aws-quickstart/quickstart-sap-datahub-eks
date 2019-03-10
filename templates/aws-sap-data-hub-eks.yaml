@@ -27,6 +27,7 @@ Metadata:
           - SDHVersion
           - SDHSwS3BucketName
           - SDHSwS3PrefixName
+          - SDHCheckPointS3Bucket
           - SDHEcrRepo
           - SDHSUserId
           - SDHSUserPass
@@ -74,6 +75,8 @@ Metadata:
         default: Install the SAP Data Hub?
       SDHVersion:
         default: SAP Data Hub version
+      SDHCheckPointS3Bucket:
+        default: S3 Bucket name of SAP Data Hub CheckPoint store
       SDHSwS3BucketName:
         default: S3 Bucket name of SAP Data Hub s/w
       SDHSwS3PrefixName:
@@ -171,6 +174,10 @@ Parameters:
     AllowedValues: [ "2.4", "2.4.1" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
     Default: "2.4.1"
+  SDHCheckPointS3Bucket:
+    Type: String
+    Description: The name of your S3 bucket where your SAP Data Hub CheckPoint will be stored. Do *NOT* include s3:// (use just your bucket name)
+    Default: "my-sdh-checkpoint"
   SDHSwS3BucketName:
     Type: String
     Description: The name of your S3 bucket where your SAP Data Hub software is stored. Do *NOT* include s3:// (use just your bucket name)
@@ -380,6 +387,8 @@ Resources:
 
                     ', export SDH_VERSION=, !Ref 'SDHVersion', '
 
+                    ', export SDH_CHECKPOINT_STORE=, !Ref 'SDHCheckPointS3Bucket', '
+                    
                     ', export SDHSwS3BucketName=, !Ref 'SDHSwS3BucketName', '
 
                     ', export SDHSwS3PrefixName=, !Ref 'SDHSwS3PrefixName', '
