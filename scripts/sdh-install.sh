@@ -2,7 +2,6 @@
 
 #
 
-#   This code was written by somckitk@amazon.com.
 #   This sample code is provided on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
