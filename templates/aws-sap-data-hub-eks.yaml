@@ -20,6 +20,7 @@ Metadata:
           - KubernetesVersion
           - SDHIAMProfile
           - SDHIAMRole
+          - SDHIAMRoleArn
       - Label:
           default: SDH Installation Host configuration
         Parameters:
@@ -59,6 +60,8 @@ Metadata:
         default: Name of an existing IAM Profile with rights to access EKS cluster
       SDHIAMRole:
         default: Name of an existing IAM Role with rights to access EKS cluster
+      SDHIAMRoleArn:
+        default: ARN of an existing IAM Role with rights to access EKS cluster
       NumberOfNodes:
         default: Number of nodes
       NodeGroupName:
@@ -128,6 +131,9 @@ Parameters:
     Type: String
   SDHIAMRole:
     Description: IAM instance role with permissions to access the EKS cluster
+    Type: String
+  SDHIAMRoleArn:
+    Description: ARN of IAM instance role with permissions to access the EKS cluster
     Type: String
   VPCID:
     Type: "AWS::EC2::VPC::Id"
@@ -392,6 +398,8 @@ Resources:
                     ', export SDHSwS3BucketName=, !Ref 'SDHSwS3BucketName', '
 
                     ', export SDHSwS3PrefixName=, !Ref 'SDHSwS3PrefixName', '
+
+                    ', export SDH_IAM_ROLE_ARN=, !Ref 'SDHIAMRoleArn', '
 
                     ', export SDH_S_USERID=, !Ref 'SDHSUserId', '
 
@@ -685,3 +693,6 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: "vora/hello-world"
+Outputs:
+  SDHInstHostIpAddress:
+    Value: !GetAtt SDHNetworkInterface.PrimaryPrivateIpAddress
