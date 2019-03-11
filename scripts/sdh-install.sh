@@ -10,19 +10,26 @@
 
 
 ###BEGIN-Global Variables###
+#define global file locations
 CONFIG_FILE="/root/install/config"
 SDH_SW_TARGET="/tmp/SDH"
+
 #this is the min. size the s/w should be when downloaded
 SDH_TOTAL_SIZE="1840408"
+
 #this is the min. number of ECR repositories that should be created
 ECR_REPOS_COUNT="30"
+
+#this is the min. number of SDH Kubernetes pods that should be running
 SDH_TOTAL_PODS="50"
+
+#define some YAML files needed for Kubernetes 
 HELM_YAML="/root/install/helm.yaml"
 INGRESS_YAML="/root/install/ingress.yaml"
 STORAGE_YAML="/root/install/storage-class.yaml"
 ###END-Global Variables###
 
-#install nslookup
+#install nslookup utility
 yum -y install bind-utils
 
 sed -i '/config/d' "$CONFIG_FILE"
@@ -98,7 +105,7 @@ EKS_STATUS=$(kubectl get nodes | wc -l)
 EKS_STATUS_COUNT="15"
 EKS_STATUS_LOOP="0"
 
-until [ "$EKS_STATUS" -gt 3 ]
+until [ "$EKS_STATUS" -ge 3 ]
 do
     sleep 5
     EKS_STATUS=$(kubectl get nodes | wc -l)
@@ -126,7 +133,7 @@ fi
 #create a default Kubernetes storage class for EKS version <1.11
 if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
 then
-        kubectl apply -f $STORAGE_YAML
+        kubectl apply -f "$STORAGE_YAML"
         
 fi
 
