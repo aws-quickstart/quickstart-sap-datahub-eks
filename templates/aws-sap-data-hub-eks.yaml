@@ -104,7 +104,7 @@ Parameters:
       to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
   NodeInstanceTypeSDH:
-    Default: r5.2xlarge
+    Default: r4.xlarge
     AllowedValues:
       - t2.2xlarge
       - t3.2xlarge

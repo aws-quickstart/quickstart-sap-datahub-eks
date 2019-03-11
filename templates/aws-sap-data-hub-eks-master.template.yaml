@@ -274,7 +274,7 @@ Parameters:
     Description: Size for node root EBS volumes
     Type: String
   NodeInstanceTypeSDH:
-    Default: r5.2xlarge
+    Default: r4.xlarge
     AllowedValues:
       - t2.2xlarge
       - t3.2xlarge

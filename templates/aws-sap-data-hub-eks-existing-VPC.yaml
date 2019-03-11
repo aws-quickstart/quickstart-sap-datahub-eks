@@ -223,7 +223,7 @@ Parameters:
     Description: Size for node root EBS volumes
     Type: String
   NodeInstanceTypeSDH:
-    Default: r5.2xlarge
+    Default: r4.xlarge
     AllowedValues:
       - t2.2xlarge
       - t3.2xlarge
@@ -472,11 +472,5 @@ Resources:
         SDHIAMProfile: !Ref SDHInstanceProfile
         SDHIAMRole: !Ref SDHIAMRole
 Outputs:
-  KubeConfigPath:
-    Value: !GetAtt EKSStack.Outputs.KubeConfigPath
-  HelmLambdaArn:
-    Value: !GetAtt EKSStack.Outputs.HelmLambdaArn
-  KubeManifestLambdaArn:
-    Value: !GetAtt EKSStack.Outputs.KubeManifestLambdaArn
   EKSClusterName:
     Value: !GetAtt EKSStack.Outputs.EKSClusterName
