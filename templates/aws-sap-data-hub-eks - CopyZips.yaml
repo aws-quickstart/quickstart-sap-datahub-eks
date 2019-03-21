@@ -28,14 +28,11 @@ Metadata:
           - SDHVersion
           - SDHSwS3BucketName
           - SDHSwS3PrefixName
+          - SDHCheckPointS3Bucket
           - SDHEcrRepo
           - SDHSUserId
           - SDHSUserPass
           - SDHVoraPass
-          - SDHEnableVoraCheckPoint
-          - SDHCheckPointS3Bucket
-          - SDHS3AccessKey
-          - SDHS3SecretAccessKey
           - SDHNameSpace
           - SDHCertDomainName
           - SDHELBPrivatePublic
@@ -122,7 +119,6 @@ Parameters:
       - r4.2xlarge
       - r5.xlarge
       - r5.2xlarge
-      - r5.4xlarge
     ConstraintDescription: Must be a valid EC2 instance type
     Description: Type of EC2 instance for the SDH Installation Host instance
     Type: String
@@ -222,19 +218,6 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The password for the Vora user in your SAP Data Hub system.
-  SDHS3AccessKey:
-    Type: String
-    NoEcho: true
-    Description: The S3 Access Key for your Vora Checkpoint Store.
-  SDHS3SecretAccessKey:
-    Type: String
-    NoEcho: true
-    Description: The S3 Secret Access Key for your Vora Checkpoint Store.
-  SDHEnableVoraCheckPoint:
-    Type: String
-    Description: "Do you want Enable the Vora Checkpoint store to an S3 bucket?"
-    AllowedValues: [true, false]
-    Default: true
   SDHCertDomainName:
     Type: String
     Description: The domain you want to use for your SAP Data Hub system 
@@ -387,6 +370,125 @@ Mappings:
 Conditions: 
   CreateECR: !Equals [ !Ref SDHEcrRepo, true ]
 Resources:
+  LambdaDelECRRepoBucket:
+    Type: AWS::S3::Bucket
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
+      DestBucket: !Ref LambdaDelECRRepoBucket
+      SourceBucket: !Ref 'QSS3BucketName'
+      Prefix: !Ref 'QSS3KeyPrefix'
+      Objects:
+        - functions/packages/CleanupERCRepo/lambda.zip
+  DelECRRepoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+        - PolicyName: lambda-copier
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub 'arn:aws:s3:::${LambdaDelECRRepoBucket}/${QSS3KeyPrefix}*'
+  CopyZipsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python2.7
+      Role: !GetAtt IamStack.Outputs.CopyZipsRoleArn
+      Timeout: 600
+      Code:
+        ZipFile: |
+            from __future__ import print_function
+            import boto3
+            import traceback
+            from botocore.vendored import requests
+            import json
+
+
+            SUCCESS = "SUCCESS"
+            FAILED = "FAILED"
+
+
+            def send(event, context, response_status, response_data, physical_resource_id):
+                response_url = event['ResponseURL']
+
+                print(response_url)
+
+                response_body = dict()
+                response_body['Status'] = response_status
+                response_body['Reason'] = 'See the details in CloudWatch Log Stream: ' + context.log_stream_name
+                response_body['PhysicalResourceId'] = physical_resource_id or context.log_stream_name
+                response_body['StackId'] = event['StackId']
+                response_body['RequestId'] = event['RequestId']
+                response_body['LogicalResourceId'] = event['LogicalResourceId']
+                response_body['Data'] = response_data
+
+                json_response_body = json.dumps(response_body)
+
+                print("Response body:\n" + json_response_body)
+
+                headers = {
+                    'content-type': '',
+                    'content-length': str(len(json_response_body))
+                }
+
+                try:
+                    response = requests.put(response_url, data=json_response_body, headers=headers)
+                    print("Status code: " + response.reason)
+                except Exception as e:
+                    print("send(..) failed executing requests.put(..): " + str(e))
+
+
+            def lambda_handler(event, context):
+                status = SUCCESS
+                try:
+                    print(json.dumps(event))
+                    if event['RequestType'] == 'Delete':
+                        ######## Code goes here
+                        stack_id = event['RequestProperties']['StackId']
+                        for repo in ecr_client.list_repos():
+                            if repo['tag'] == stack_id:
+                                for image in ecr_client.describe_images():
+                                    ecr_client.delete_image(image)
+                except Exception as e:
+                    status = FAILED
+                    print(e)
+                    traceback.print_exc()
+                send(event, context, status, {}, '')
+      CleanupECRRepoLambda:
+    DependsOn: CopyZips
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Role: !Ref DelECRRepoRole
+      Runtime: python2.7
+      Timeout: 900
+      Code:
+        S3Bucket: !Ref LambdaDelECRRepoBucket
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/CleanupERCRepo/lambda.zip'
   SDHInstance:
     DependsOn: SDHNetworkInterface
     Type: AWS::EC2::Instance
@@ -423,10 +525,6 @@ Resources:
                     ', export SDH_S_USER_PASS=, !Ref 'SDHSUserPass', '
 
                     ', export SDH_VORA_PASS=, !Ref 'SDHVoraPass', '
-
-                    ', export SDH_ACCESS_KEY=, !Ref 'SDHS3AccessKey', '
-
-                    ', export SDH_SECRET_ACCESS_KEY=, !Ref 'SDHS3SecretAccessKey', '
 
                     ', export SDH_NAME_SPACE=, !Ref 'SDHNameSpace', '
 

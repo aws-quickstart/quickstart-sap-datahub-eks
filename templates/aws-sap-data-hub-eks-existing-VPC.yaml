@@ -40,6 +40,8 @@ Metadata:
           - SDHSUserPass
           - SDHVoraPass
           - SDHNameSpace
+          - SDHS3AccessKey
+          - SDHS3SecretAccessKey
           - SDHCertDomainName
           - SDHELBPrivatePublic
           - NodeInstanceTypeSDH
@@ -111,6 +113,10 @@ Metadata:
         default: SAP S-User Password
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
+      SDHS3AccessKey:
+        default: S3 Access Key
+      SDHS3SecretAccessKey:
+        default: S3 Secret Access Key
       SDHCertDomainName:
         default: SAP Data Hub Domain Name
 Parameters:
@@ -137,7 +143,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
-    Default: quickstart-sap-data-hub-on-eks/
+    Default: quickstart-sap-datahub-eks/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
@@ -235,6 +241,7 @@ Parameters:
       - r4.2xlarge
       - r5.xlarge
       - r5.2xlarge
+      - r5.4xlarge
     ConstraintDescription: Must be a valid EC2 instance type
     Description: Type of EC2 instance for the SDH Installation Host instance
     Type: String
@@ -316,6 +323,14 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The password for the Vora user in your SAP Data Hub system.
+  SDHS3AccessKey:
+    Type: String
+    NoEcho: true
+    Description: The S3 Access Key for your Vora Checkpoint Store.
+  SDHS3SecretAccessKey:
+    Type: String
+    NoEcho: true
+    Description: The S3 Secret Access Key for your Vora Checkpoint Store.
   SDHCertDomainName:
     Type: String
     Description: The domain you want to use for your SAP Data Hub system 
@@ -364,16 +379,21 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - ecr:Get*
-                  - ecr:Describe*
-                  - ecr:Upload*
-                  - ecr:Initiate*
-                  - ecr:Put*
-                  - ecr:List*
-                  - ecr:Complete*
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:GetRepositoryPolicy
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                  - ecr:ListTagsForResource
+                  - ecr:TagResource
+                  - ecr:DescribeImages
+                  - ecr:BatchGetImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
                   - ec2:DescribeSecurityGroups
                   - ec2:DescribeSubnets
-                  - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
                   - elasticloadbalancing:Create*
                   - elasticloadbalancing:Describe*
@@ -383,32 +403,69 @@ Resources:
                   - eks:Describe*
                 Resource: "*"
               - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/com.sap*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/elasticsearch*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/fabric8*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/grafana*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/kibana*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*kube*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nginx*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/prom*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/consul*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nats*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/vora*"
+              - Effect: Allow
                 Action: 
                   - s3:GetObject
                   - s3:ListBucket
                 Resource: !Sub "arn:aws:s3:::${QSS3BucketName}/*"
               - Effect: Allow
                 Action: 
-                  - s3:GetObject
+                  - s3:Get*
                   - s3:List*
                 Resource: !Sub "arn:aws:s3:::${SDHSwS3BucketName}"
               - Effect: Allow
                 Action: 
-                  - s3:GetObject
+                  - s3:Get*
                   - s3:List*
                 Resource: !Sub "arn:aws:s3:::${SDHSwS3BucketName}/*"
               - Effect: Allow
                 Action: 
                   - s3:GetObject
-                  - s3:ListBucket
+                  - s3:List*
                 Resource: !Sub "arn:aws:s3:::${SDHCheckPointS3Bucket}"
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource:
-                  - "*"
   SDHInstanceProfile: 
     Type: "AWS::IAM::InstanceProfile"
     Properties: 
@@ -468,6 +525,8 @@ Resources:
         SDHSUserId: !Ref SDHSUserId
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
+        SDHS3AccessKey: !Ref SDHS3AccessKey
+        SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
         SDHIAMProfile: !Ref SDHInstanceProfile
         SDHIAMRole: !Ref SDHIAMRole

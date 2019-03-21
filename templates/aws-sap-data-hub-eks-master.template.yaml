@@ -40,6 +40,8 @@ Metadata:
           - SDHSUserId
           - SDHSUserPass
           - SDHVoraPass
+          - SDHS3AccessKey
+          - SDHS3SecretAccessKey
           - SDHNameSpace
           - SDHCertDomainName
           - SDHELBPrivatePublic
@@ -111,6 +113,10 @@ Metadata:
         default: SAP S-User Password
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
+      SDHS3AccessKey:
+        default: S3 Access Key
+      SDHS3SecretAccessKey:
+        default: S3 Secret Access Key
       SDHCertDomainName:
         default: SAP Data Hub Domain Name 
 Parameters:
@@ -181,7 +187,7 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
       uppercase letters, hyphens (-), and forward slash (/).
-    Default: quickstart-sap-data-hub-on-eks/
+    Default: quickstart-sap-datahub-eks/
     Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
@@ -286,6 +292,7 @@ Parameters:
       - r4.2xlarge
       - r5.xlarge
       - r5.2xlarge
+      - r5.4xlarge
     ConstraintDescription: Must be a valid EC2 instance type
     Description: Type of EC2 instance for the SDH Installation Host instance
     Type: String
@@ -342,6 +349,14 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The password for the Vora user in your SAP Data Hub system.
+  SDHS3AccessKey:
+    Type: String
+    NoEcho: true
+    Description: The S3 Access Key for your Vora Checkpoint Store.
+  SDHS3SecretAccessKey:
+    Type: String
+    NoEcho: true
+    Description: The S3 Secret Access Key for your Vora Checkpoint Store.
   SDHCertDomainName:
     Type: String
     Description: Domain you want to use for your SAP Data Hub Ingress (TLS cert) 
@@ -418,6 +433,8 @@ Resources:
         SDHSUserId: !Ref SDHSUserId
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
+        SDHS3AccessKey: !Ref SDHS3AccessKey
+        SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
 Outputs:
   KubeConfigPath:

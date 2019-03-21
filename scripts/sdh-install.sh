@@ -37,9 +37,11 @@ sed -i '/config/d' "$CONFIG_FILE"
 #source our configuration file
 source "$CONFIG_FILE"
 
-#remove the password after we have read it in
+#remove the password and access keys from the config file after we have read it in
 sed -i '/SDH_S_USER_PASS/d' "$CONFIG_FILE"
 sed -i '/SDH_VORA_PASS/d'  "$CONFIG_FILE"
+sed -i '/SDH_ACCESS_KEY/d' "$CONFIG_FILE"
+sed -i '/SDH_SECRET_ACCESS_KEY/d'  "$CONFIG_FILE"
 
 #set variables based on which SAP Data Hub version we are installing
 
@@ -72,7 +74,9 @@ echo "KUBECONFIG = $KUBECONFIG"
 #download the SAP Data Hub software
 mkdir "$SDH_SW_TARGET"
 
-aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+#aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+
+aws s3 cp s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET" --recursive
 
 #try to re-download the files if there is an issue with downloaded file size
 SDH_DNL_SIZE=$(du -sk "$SDH_SW_TARGET" | cut -f1)
@@ -81,7 +85,8 @@ SDH_DNL_SIZE=$(du -sk "$SDH_SW_TARGET" | cut -f1)
 if [ ${SDH_DNL_SIZE} -le ${SDH_TOTAL_SIZE} ]
 then
         echo "Retrying S3 download..."
-        aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+        #aws s3 sync s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET"
+        aws s3 cp s3://${SDHSwS3BucketName}/${SDHSwS3PrefixName} "$SDH_SW_TARGET" --recursive
 
 fi
 
@@ -243,6 +248,42 @@ fi
 #aws ecr create-repository --repository-name=nats-streaming --region $REGION
 #aws ecr create-repository --repository-name=vora/hello-world --region $REGION
 
+#tag the ECR repositories
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vora-dqp --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vora-dqp-textanalysis --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/spark-datasourcedist --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.hana.container/base-opensuse42.3-amd64 --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vora-deployment-operator --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/security-operator --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/init-security --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/uaa --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/opensuse-leap --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-vrep --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-auth --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-teardown --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-module-loader --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/app-base --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/flowagent --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/app-base --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vora-license-manager --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-shared-ui --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-ui --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:com.sap.datahub.linuxx86_64/vsystem-voraadapter --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:elasticsearch/elasticsearch-oss --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:fabric8/fluentd-kubernetes --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:grafana/grafana --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:kibana/kibana-oss --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:google_containers/kube-state-metrics --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:nginx --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:prom/alertmanager --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:prom/node-exporter --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:prom/prometheus --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:prom/pushgateway --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:consul --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:nats-streaming --tags Key=stack,Value=${STACK_ID}  --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:vora/hello-world --tags Key=stack,Value=${STACK_ID}  --region $REGION
+
 #validate that all ECR repos were created
 ECR_REPOS=$(aws ecr describe-repositories --region $REGION --output text | wc -l)
 
@@ -281,9 +322,10 @@ else
         #bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
 
         #enable below for checkpoint store and ECR role integration
-        #bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role='ARN of node role which has ECR privileges' --enable-checkpoint-store yes --checkpoint-store-type S3 --checkpoint-store-connection 
+        bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type S3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
 
-        bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN"  
+        #enable below for checkpoint store and ECR role integration
+        #bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
 
 
         #create custom cert for the Ingress controller
