@@ -40,6 +40,7 @@ Metadata:
           - SDHSUserId
           - SDHSUserPass
           - SDHVoraPass
+          - SDHEnableVoraCheckPoint
           - SDHS3AccessKey
           - SDHS3SecretAccessKey
           - SDHNameSpace
@@ -113,6 +114,8 @@ Metadata:
         default: SAP S-User Password
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
+      SDHEnableVoraCheckPoint:
+        default: Enable the Checkpoint Store in S3 for Vora?
       SDHS3AccessKey:
         default: S3 Access Key
       SDHS3SecretAccessKey:
@@ -349,6 +352,11 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The password for the Vora user in your SAP Data Hub system.
+  SDHEnableVoraCheckPoint:
+    Type: String
+    Description: "Do you want Enable the Vora Checkpoint store to an S3 bucket?"
+    AllowedValues: [true, false]
+    Default: true
   SDHS3AccessKey:
     Type: String
     NoEcho: true
@@ -433,6 +441,7 @@ Resources:
         SDHSUserId: !Ref SDHSUserId
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
+        SDHEnableVoraCheckPoint: !Ref SDHEnableVoraCheckPoint
         SDHS3AccessKey: !Ref SDHS3AccessKey
         SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName

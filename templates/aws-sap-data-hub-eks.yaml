@@ -99,6 +99,12 @@ Metadata:
         default: SAP S-User Password
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
+      SDHEnableVoraCheckPoint:
+        default: Enable the Checkpoint Store in S3 for Vora?
+      SDHS3AccessKey:
+        default: S3 Access Key
+      SDHS3SecretAccessKey:
+        default: S3 Secret Access Key
       SDHCertDomainName:
         default: SAP Data Hub Domain Name
 Parameters:
@@ -186,7 +192,7 @@ Parameters:
     Default: "2.4.1"
   SDHCheckPointS3Bucket:
     Type: String
-    Description: The name of your S3 bucket where your SAP Data Hub CheckPoint will be stored. Do *NOT* include s3:// (use just your bucket name)
+    Description: The name of your *existing* S3 bucket where your SAP Data Hub CheckPoint will be stored. Do *NOT* include s3:// (use just your bucket name)
     Default: "my-sdh-checkpoint"
   SDHSwS3BucketName:
     Type: String
@@ -222,6 +228,11 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The password for the Vora user in your SAP Data Hub system.
+  SDHEnableVoraCheckPoint:
+    Type: String
+    Description: "Do you want Enable the Vora Checkpoint store to an S3 bucket?"
+    AllowedValues: [true, false]
+    Default: true
   SDHS3AccessKey:
     Type: String
     NoEcho: true
@@ -230,11 +241,6 @@ Parameters:
     Type: String
     NoEcho: true
     Description: The S3 Secret Access Key for your Vora Checkpoint Store.
-  SDHEnableVoraCheckPoint:
-    Type: String
-    Description: "Do you want Enable the Vora Checkpoint store to an S3 bucket?"
-    AllowedValues: [true, false]
-    Default: true
   SDHCertDomainName:
     Type: String
     Description: The domain you want to use for your SAP Data Hub system 
@@ -424,6 +430,8 @@ Resources:
 
                     ', export SDH_VORA_PASS=, !Ref 'SDHVoraPass', '
 
+                    ', export SDH_ENABLE_CHECKPOINT=, !Ref 'SDHEnableVoraCheckPoint', '
+
                     ', export SDH_ACCESS_KEY=, !Ref 'SDHS3AccessKey', '
 
                     ', export SDH_SECRET_ACCESS_KEY=, !Ref 'SDHS3SecretAccessKey', '
@@ -440,7 +448,7 @@ Resources:
 
                     ', export REGION=, !Ref 'AWS::Region', '
 
-                    ', export STACK_ID=, !Ref 'AWS::StackId', '
+                    ', export STACK_ID=, !Ref 'AWS::StackName', '
                     ']]
                mode: 000500
                owner: root
