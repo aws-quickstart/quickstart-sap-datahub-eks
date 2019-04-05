@@ -398,15 +398,15 @@ Resources:
                   - ecr:ListTagsForResource
                   - ecr:TagResource
                   - ecr:DescribeImages
-                  - ecr:BatchGetImage
+                  - ecr:Batch*
                   - ecr:InitiateLayerUpload
                   - ecr:UploadLayerPart
                   - ecr:CompleteLayerUpload
-                  - ec2:DescribeSecurityGroups
-                  - ec2:DescribeSubnets
+                  - ec2:Describe*
                   - ec2:DescribeNetworkInterfaces
                   - elasticloadbalancing:Create*
                   - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:Delete*
                   - elasticloadbalancing:Register*
                   - elasticloadbalancing:SetIpAddressType
                   - elasticloadbalancing:SetSubnets
@@ -415,46 +415,57 @@ Resources:
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/com.sap*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/elasticsearch*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/fabric8*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/grafana*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/kibana*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*kube*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nginx*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/prom*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/consul*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nats*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
+                  - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/vora*"
               - Effect: Allow
                 Action: 

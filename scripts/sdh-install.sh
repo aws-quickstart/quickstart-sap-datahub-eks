@@ -373,6 +373,10 @@ else
                 ELB_STATUS=$(kubectl get svc --all-namespaces | grep -i ngi | awk '{ print $5 }')
         done
 
+        #tag the ELB
+
+        # aws elb add-tags --load-balancer-names xxx --tags Key=stack,Value=${STACK_ID}  --region $REGION
+
         #confiugre the ingress.yaml file        
         sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
         sed -i "/MYHOSTDOMAIN2/ c\    - ${SDH_CERT_DOMAIN_NAME}"      "$INGRESS_YAML"
