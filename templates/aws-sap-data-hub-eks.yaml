@@ -401,13 +401,13 @@ Mappings:
 Conditions: 
   CreateECR: !Equals [ !Ref SDHEcrRepo, true ]
 Resources:
-  CopyZipsFunction:
+  SDHCopyZipsFunction:
     Type: AWS::Lambda::Function
     Properties:
       Description: Copies objects from a source S3 bucket to a destination
       Handler: index.handler
       Runtime: python2.7
-      Role: !GetAtt 'CopyZipsRole.Arn'
+      Role: !GetAtt 'SDHCopyZipsRole.Arn'
       Timeout: 240
       Code:
         ZipFile: |
@@ -468,20 +468,11 @@ Resources:
               finally:
                   timer.cancel()
                   cfnresponse.send(event, context, status, {}, None)
-  LambdaZipsBucket:
+  SDHLambdaZipsBucket:
     Type: AWS::S3::Bucket
     Properties:
       Tags: []
-  CopyZips:
-    Type: Custom::CopyZips
-    Properties:
-      ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
-      DestBucket: !Ref 'LambdaZipsBucket'
-      SourceBucket: !Ref 'QSS3BucketName'
-      Prefix: !Ref 'QSS3KeyPrefix'
-      Objects:
-        - functions/packages/CleanUp/lambda.zip
-  CopyZipsRole:
+  SDHCopyZipsRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -509,19 +500,26 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject
                 Resource:
-                  - !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*'
-  SDHCleanUpLambda:
-    DependsOn: CopyZips
-    Type: AWS::Lambda::Function
+                  - !Sub 'arn:aws:s3:::${SDHLambdaZipsBucket}/${QSS3KeyPrefix}*'
+  SDHCopyZips:
+    Type: Custom::SDHCopyZips
     Properties:
-      Handler: lambda_function.lambda_handler
-      MemorySize: 256
-      Role: !GetAtt 'SDHIAMLambdaRole.Arn'
-      Runtime: python2.7
-      Timeout: 600
-      Code:
-        S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/CleanUp/lambda.zip'
+      ServiceToken: !GetAtt 'SDHCopyZipsFunction.Arn'
+      DestBucket: !Ref 'SDHLambdaZipsBucket'
+      SourceBucket: !Ref 'QSS3BucketName'
+      Prefix: !Ref 'QSS3KeyPrefix'
+      Objects:
+        - functions/packages/CleanUp/lambda.zip
+  SDHCleanUpLambda:
+    DependsOn: SDHCopyZips
+    Type: Custom::SDHCleanUpLambda
+    Properties:
+      ServiceToken: !GetAtt 'SDHIAMLambdaRole.Arn'
+      DestBucket: !Ref 'SDHLambdaZipsBucket'
+      SourceBucket: !Ref 'QSS3BucketName'
+      Prefix: !Ref 'QSS3KeyPrefix'
+      Objects:
+        - functions/packages/CleanUp/lambda.zip
   SDHIAMLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
