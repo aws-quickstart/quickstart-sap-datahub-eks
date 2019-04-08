@@ -449,7 +449,7 @@ Resources:
                 Action:
                   - ecr:PutImage
                   - ecr:*Delete*
-                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/kube-state-metrics"
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*kube-state-metrics"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
