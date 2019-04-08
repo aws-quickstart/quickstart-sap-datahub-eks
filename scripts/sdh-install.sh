@@ -318,18 +318,24 @@ then
         exit 0
 else
 
-        #start the SAP Data Hub silent installation
-        #bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --enable-checkpoint-store no --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME"
-
         if [ "$SDH_ENABLE_CHECKPOINT" == "true" ]
         then
             #enable below for checkpoint store and ECR role integration
-            bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type S3 --validate-checkpoint-store yes --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
+            if [ "$SDH_S_USER_TYPE" == "T" ]
+            then
+                bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
+            else
+                bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
+            fi
         else
+            if [ "$SDH_S_USER_TYPE" == "T" ]
+            then
             #enable below for ECR role integration
-            bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
+                bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
+            else
+                bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --enable-diagnostic-persistency yes --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
+            fi
         fi
-
         #create custom cert for the Ingress controller
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=*${SDH_CERT_DOMAIN_NAME}"
         kubectl -n $SDH_NAME_SPACE create secret tls vsystem-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
@@ -374,8 +380,20 @@ else
         done
 
         #tag the ELB
+        ELB_NAME=$(echo "$ELB_STATUS" | cut -d"." -f 1 | cut -d"-" -f 1)
 
-        # aws elb add-tags --load-balancer-names xxx --tags Key=stack,Value=${STACK_ID}  --region $REGION
+        aws elb add-tags --load-balancer-names "$ELB_NAME" --tags Key=stack,Value=${STACK_ID}  --region $REGION
+
+        #validate the ELB is tagged
+
+        ELB_TAG=$(aws elb describe-tags --load-balancer-names "$ELB_NAME" --region $REGION --output text | grep stack | awk '{print $3}')
+
+        if [ -z "$ELB_TAG" ]
+        then
+            echo "Could not tag the ELB -- EXITING"
+            bash -x /root/install/signal-final-status.sh 1 "Could not tag the ELB -- EXITING"
+            exit 1
+        fi
 
         #confiugre the ingress.yaml file        
         sed -i "/MYHOSTDOMAIN1/ c\  - host: ${SDH_CERT_DOMAIN_NAME}"  "$INGRESS_YAML"
