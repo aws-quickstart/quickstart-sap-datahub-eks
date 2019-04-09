@@ -404,7 +404,7 @@ Resources:
   SDHCopyZipsFunction:
     Type: AWS::Lambda::Function
     Properties:
-      Description: Copies objects from a source S3 bucket to a destination
+      Description: Copies objects from a source S3 bucket to a destination (for SDH objects)
       Handler: index.handler
       Runtime: python2.7
       Role: !GetAtt 'SDHCopyZipsRole.Arn'
@@ -509,17 +509,23 @@ Resources:
       SourceBucket: !Ref 'QSS3BucketName'
       Prefix: !Ref 'QSS3KeyPrefix'
       Objects:
-        - functions/packages/CleanUp/lambda.zip
+        - functions/packages/CleanupERCRepoELB/lambda.zip
+  SDHCleanUpLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Cleans Up ECR images and ELB created by SDH installation upon Stack Delete
+      Handler: index.handler
+      Runtime: python2.7
+      Role: !GetAtt 'SDHIAMLambdaRole.Arn'
+      Timeout: 600
+      Code: 
+        S3Bucket: !Ref SDHLambdaZipsBucket
+        S3Key: functions/packages/CleanupERCRepoELB/lambda.zip
   SDHCleanUpLambda:
-    DependsOn: SDHCopyZips
+    DependsOn: SDHCleanUpLambdaFunction
     Type: Custom::SDHCleanUpLambda
     Properties:
-      ServiceToken: !GetAtt 'SDHIAMLambdaRole.Arn'
-      DestBucket: !Ref 'SDHLambdaZipsBucket'
-      SourceBucket: !Ref 'QSS3BucketName'
-      Prefix: !Ref 'QSS3KeyPrefix'
-      Objects:
-        - functions/packages/CleanUp/lambda.zip
+      ServiceToken: !GetAtt 'SDHCleanUpLambdaFunction.Arn'
   SDHIAMLambdaRole:
     Type: "AWS::IAM::Role"
     Properties:
