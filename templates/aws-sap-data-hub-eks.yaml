@@ -515,7 +515,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Description: Cleans Up ECR images and ELB created by SDH installation upon Stack Delete
-      Handler: index.handler
+      Handler: lambda_function.lambda_handler
       Runtime: python2.7
       Role: !GetAtt 'SDHIAMLambdaRole.Arn'
       Timeout: 600
@@ -545,6 +545,9 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - ecr:Describe*
+                  - ecr:ListTagsForResource
+                  - ecr:ListImages
                   - elasticloadbalancing:Describe*
                   - elasticloadbalancing:*Delete*
                 Resource: "*"
