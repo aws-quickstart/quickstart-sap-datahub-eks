@@ -445,11 +445,5 @@ Resources:
         SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
 Outputs:
-  KubeConfigPath:
-    Value: !GetAtt EKSSDHStack.Outputs.KubeConfigPath
-  HelmLambdaArn:
-    Value: !GetAtt EKSSDHStack.Outputs.HelmLambdaArn
-  KubeManifestLambdaArn:
-    Value: !GetAtt EKSSDHStack.Outputs.KubeManifestLambdaArn
   EKSClusterName:
     Value: !GetAtt EKSSDHStack.Outputs.EKSClusterName
