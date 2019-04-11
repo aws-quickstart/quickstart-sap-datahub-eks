@@ -550,6 +550,9 @@ Resources:
                   - ecr:ListImages
                   - elasticloadbalancing:Describe*
                   - elasticloadbalancing:*Delete*
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
                 Resource: "*"
               - Effect: Allow
                 Action:

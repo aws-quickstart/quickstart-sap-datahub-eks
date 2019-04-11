@@ -41,7 +41,6 @@ Metadata:
           - SDHSUserPass
           - SDHVoraPass
           - SDHSUserType
-          - SDHEnableVoraCheckPoint
           - SDHS3AccessKey
           - SDHS3SecretAccessKey
           - SDHNameSpace
@@ -117,8 +116,6 @@ Metadata:
         default: SAP Data Hub Vora user's Password
       SDHSUserType:
         default: SAP S-User type (S=S-user, T=Technical-user)
-      SDHEnableVoraCheckPoint:
-        default: Enable the Checkpoint Store in S3 for Vora?
       SDHS3AccessKey:
         default: S3 Access Key
       SDHS3SecretAccessKey:
@@ -139,7 +136,7 @@ Parameters:
     Description: Enable or disable the creation of a Bastion host in the first public subnet
     Type: String
     AllowedValues: [ "Enabled", "Disabled" ]
-    Default: "Enabled"
+    Default: "Disabled"
   PrivateSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -201,8 +198,7 @@ Parameters:
   RemoteAccessCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
-    Description: The CIDR IP range that is permitted to access the instances We recommend
-      that you set this value to a trusted IP range.
+    Description: The CIDR IP range that is permitted to access the instances.
     Type: String
   VPCCIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
@@ -360,11 +356,6 @@ Parameters:
     AllowedValues: [ "S", "T" ]
     Description: Type of S-user in the SAP Docker Repository
     Default: "S"
-  SDHEnableVoraCheckPoint:
-    Type: String
-    Description: "Do you want Enable the Vora Checkpoint store to an S3 bucket?"
-    AllowedValues: [true, false]
-    Default: true
   SDHS3AccessKey:
     Type: String
     NoEcho: true
@@ -450,7 +441,6 @@ Resources:
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
         SDHSUserType: !Ref SDHSUserType
-        SDHEnableVoraCheckPoint: !Ref SDHEnableVoraCheckPoint
         SDHS3AccessKey: !Ref SDHS3AccessKey
         SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
