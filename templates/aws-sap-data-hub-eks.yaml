@@ -503,7 +503,7 @@ Resources:
       Objects:
         - functions/packages/CleanupERCRepoELB/lambda.zip
   SDHCleanUpLambdaFunction:
-    DependsOn: SDHCopyZips
+    DependsOn: ECRVoraDqp
     Type: AWS::Lambda::Function
     Properties:
       Description: Cleans Up ECR images and ELB created by SDH installation upon Stack Delete
