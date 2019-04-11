@@ -544,7 +544,6 @@ Resources:
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
         SDHSUserType: !Ref SDHSUserType
-        SDHEnableVoraCheckPoint: !Ref SDHEnableVoraCheckPoint
         SDHS3AccessKey: !Ref SDHS3AccessKey
         SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
