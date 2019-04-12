@@ -115,11 +115,11 @@ Metadata:
       SDHVoraPass:
         default: SAP Data Hub Vora user's Password
       SDHSUserType:
-        default: SAP S-User type (S=S-user, T=Technical-user)
+        default: SAP S-User type 
       SDHS3AccessKey:
-        default: S3 Access Key
+        default: AWS IAM Access Key for S3 Checkpoint Bucket
       SDHS3SecretAccessKey:
-        default: S3 Secret Access Key
+        default: AWS IAM Secret Access Key for S3 Checkpoint Bucket
       SDHCertDomainName:
         default: SAP Data Hub Domain Name 
 Parameters:
@@ -354,16 +354,16 @@ Parameters:
   SDHSUserType:
     Type: String
     AllowedValues: [ "S", "T" ]
-    Description: Type of S-user in the SAP Docker Repository
+    Description: Type of S-user in the SAP Docker Repository. (S=S-user, T=Technical-user)
     Default: "S"
   SDHS3AccessKey:
     Type: String
     NoEcho: true
-    Description: The S3 Access Key for your Vora Checkpoint Store.
+    Description: The AWS IAM Access Key for your S3 Vora Checkpoint Store.
   SDHS3SecretAccessKey:
     Type: String
     NoEcho: true
-    Description: The S3 Secret Access Key for your Vora Checkpoint Store.
+    Description: The AWS IAM Secret Access Key for your S3 Vora Checkpoint Store.
   SDHCertDomainName:
     Type: String
     Description: Domain you want to use for your SAP Data Hub Ingress (TLS cert) 
