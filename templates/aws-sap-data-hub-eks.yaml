@@ -537,6 +537,7 @@ Resources:
       - ECRPrometheus
       - ECRPromPushGateway
       - ECRConsul
+      - ECRNatsStreaming
       - ECRVoraHelloWorld
     Type: AWS::Lambda::Function
     Properties:
