@@ -1,4 +1,4 @@
-# quickstart-sap-data-hub-on-eks
+# quickstart-sap-data-hub-eks
 ## SAP Data Hub on Amazon EKS
 
 
