@@ -383,7 +383,7 @@ else
         #ELB_NAME=$(echo "$ELB_STATUS" | cut -d"." -f 1 | cut -d"-" -f 1)
 
         #describe load-balancers and find our load-balancer
-        ELB_NAME=$(aws elb describe-load-balancers --region $REGION --output text | grep "$ELB_STATUS" | awk '{ print $6 }')
+        ELB_NAME=$(aws elb describe-load-balancers --region $REGION --output text | grep "$ELB_STATUS" | awk '{ print $5 }')
 
         aws elb add-tags --load-balancer-names "$ELB_NAME" --tags Key=stack,Value=${STACK_ID}  --region $REGION
 
