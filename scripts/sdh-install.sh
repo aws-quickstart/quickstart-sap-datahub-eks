@@ -380,12 +380,24 @@ else
         done
 
         #tag the ELB
-        ELB_NAME=$(echo "$ELB_STATUS" | cut -d"." -f 1 | cut -d"-" -f 1)
+        #ELB_NAME=$(echo "$ELB_STATUS" | cut -d"." -f 1 | cut -d"-" -f 1)
+
+        #describe load-balancers and find our load-balancer
+        if [ "$SDH_ELB_PRIVPUB" == "PUBLIC" ]
+        then
+                ELB_NAME=$(aws elb describe-load-balancers --region $REGION --output text | grep "$ELB_STATUS" | awk '{ print $6 }')
+        fi
+
+        #for private ELB
+        if [ "$SDH_ELB_PRIVPUB" == "PRIVATE" ]
+        then
+                ELB_NAME=$(aws elb describe-load-balancers --region $REGION --output text | grep "$ELB_STATUS" | awk '{ print $5 }')
+        fi
+
 
         aws elb add-tags --load-balancer-names "$ELB_NAME" --tags Key=stack,Value=${STACK_ID}  --region $REGION
 
         #validate the ELB is tagged
-
         ELB_TAG=$(aws elb describe-tags --load-balancer-names "$ELB_NAME" --region $REGION --output text | grep stack | awk '{print $3}')
 
         if [ -z "$ELB_TAG" ]
