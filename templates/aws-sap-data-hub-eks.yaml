@@ -248,11 +248,11 @@ Parameters:
 Mappings:
   K8sVersionMap:
     "1.11":
-      STD: EKS111
-      GPU: EKS111GPU
+      STD: AMZNEKS111
+      GPU: AMZNEKS111GPU
     "1.10":
-      STD: EKS110
-      GPU: EKS110GPU
+      STD: AMZNEKS110
+      GPU: AMZNEKS110GPU
   InstanceTypes:
     t2.small: { Type: STD }
     t2.medium: { Type: STD }
@@ -336,60 +336,60 @@ Mappings:
     z1d.12xlarge: { Type: STD }
   AWSAMIRegionMap:
     AMI:
-      EKS111: amazon-eks-node-1.11-v20
-      EKS111GPU: amazon-eks-gpu-node-1.11-v20
-      EKS110: amazon-eks-node-1.10-v20
-      EKS110GPU: amazon-eks-gpu-node-1.10-v20
+      AMZNEKS111: amazon-eks-node-1.11-v20
+      AMZNEKS111GPU: amazon-eks-gpu-node-1.11-v20
+      AMZNEKS110: amazon-eks-node-1.10-v20
+      AMZNEKS110GPU: amazon-eks-gpu-node-1.10-v20
     ap-northeast-1:
-      EKS111: ami-0f0e8066383e7a2cb
-      EKS111GPU: ami-036b3969c5eb8d3cf
-      EKS110: ami-06398bdd37d76571d
-      EKS110GPU: ami-0afc9d14b2fe11ad9
+      AMZNEKS111: ami-0f0e8066383e7a2cb
+      AMZNEKS111GPU: ami-036b3969c5eb8d3cf
+      AMZNEKS110: ami-06398bdd37d76571d
+      AMZNEKS110GPU: ami-0afc9d14b2fe11ad9
     ap-northeast-2:
-      EKS111: ami-0b7baa90de70f683f
-      EKS111GPU: ami-0b7f163f7194396f7
-      EKS110: ami-08a87e0a7c32fa649
-      EKS110GPU: ami-0d75b9ab57bfc8c9a
+      AMZNEKS111: ami-0b7baa90de70f683f
+      AMZNEKS111GPU: ami-0b7f163f7194396f7
+      AMZNEKS110: ami-08a87e0a7c32fa649
+      AMZNEKS110GPU: ami-0d75b9ab57bfc8c9a
     ap-southeast-1:
-      EKS111: ami-019966ed970c18502
-      EKS111GPU: ami-093f742654a955ee6
-      EKS110: ami-0ac3510e44b5bf8ef
-      EKS110GPU: ami-0ecce0670cb66d17b
+      AMZNEKS111: ami-019966ed970c18502
+      AMZNEKS111GPU: ami-093f742654a955ee6
+      AMZNEKS110: ami-0ac3510e44b5bf8ef
+      AMZNEKS110GPU: ami-0ecce0670cb66d17b
     ap-southeast-2:
-      EKS111: ami-06ade0abbd8eca425
-      EKS111GPU: ami-05e09575123ff498b
-      EKS110: ami-0d2c929ace88cfebe
-      EKS110GPU: ami-03b048bd9d3861ce9
+      AMZNEKS111: ami-06ade0abbd8eca425
+      AMZNEKS111GPU: ami-05e09575123ff498b
+      AMZNEKS110: ami-0d2c929ace88cfebe
+      AMZNEKS110GPU: ami-03b048bd9d3861ce9
     eu-central-1:
-      EKS111: ami-010caa98bae9a09e2
-      EKS111GPU: ami-0d6f0554fd4743a9d
-      EKS110: ami-08eb700778f03ea94
-      EKS110GPU: ami-000622b1016d2a5bf
+      AMZNEKS111: ami-010caa98bae9a09e2
+      AMZNEKS111GPU: ami-0d6f0554fd4743a9d
+      AMZNEKS110: ami-08eb700778f03ea94
+      AMZNEKS110GPU: ami-000622b1016d2a5bf
     eu-north-1:
-      EKS111: ami-06ee67302ab7cf838
-      EKS111GPU: ami-0b159b75
-      EKS110: ami-068b8a1efffd30eda
-      EKS110GPU: ami-cc149ab2
+      AMZNEKS111: ami-06ee67302ab7cf838
+      AMZNEKS111GPU: ami-0b159b75
+      AMZNEKS110: ami-068b8a1efffd30eda
+      AMZNEKS110GPU: ami-cc149ab2
     eu-west-1:
-      EKS111: ami-01e08d22b9439c15a
-      EKS111GPU: ami-097978e7acde1fd7c
-      EKS110: ami-0de10c614955da932
-      EKS110GPU: ami-0dafd3a1dc43781f7
+      AMZNEKS111: ami-01e08d22b9439c15a
+      AMZNEKS111GPU: ami-097978e7acde1fd7c
+      AMZNEKS110: ami-0de10c614955da932
+      AMZNEKS110GPU: ami-0dafd3a1dc43781f7
     us-east-1:
-      EKS111: ami-0c24db5df6badc35a
-      EKS111GPU: ami-0ff0241c02b279f50
-      EKS110: ami-04358410d28eaab63
-      EKS110GPU: ami-0131c0ca222183def
+      AMZNEKS111: ami-0c24db5df6badc35a
+      AMZNEKS111GPU: ami-0ff0241c02b279f50
+      AMZNEKS110: ami-04358410d28eaab63
+      AMZNEKS110GPU: ami-0131c0ca222183def
     us-east-2:
-      EKS111: ami-0c2e8d28b1f854c68
-      EKS111GPU: ami-006a12f54eaafc2b1
-      EKS110: ami-0b779e8ab57655b4b
-      EKS110GPU: ami-0abfb3be33c196cbf
+      AMZNEKS111: ami-0c2e8d28b1f854c68
+      AMZNEKS111GPU: ami-006a12f54eaafc2b1
+      AMZNEKS110: ami-0b779e8ab57655b4b
+      AMZNEKS110GPU: ami-0abfb3be33c196cbf
     us-west-2:
-      EKS111: ami-0a2abab4107669c1b
-      EKS111GPU: ami-0c9e5e2d8caa9fb5e
-      EKS110: ami-09e1df3bad220af0b
-      EKS110GPU: ami-0ebf0561e61a2be02
+      AMZNEKS111: ami-0a2abab4107669c1b
+      AMZNEKS111GPU: ami-0c9e5e2d8caa9fb5e
+      AMZNEKS110: ami-09e1df3bad220af0b
+      AMZNEKS110GPU: ami-0ebf0561e61a2be02
 Conditions: 
   CreateECR: !Equals [ !Ref SDHEcrRepo, true ]
 Resources:
