@@ -16,7 +16,7 @@ The Quick Start offers two deployment options:
 
 You can also use the AWS CloudFormation templates as a starting point for your own implementation.
 
-![Quick Start architecture for SAP DataHub on Amazon EKS](https://github.com/aws-quickstart/quickstart-sap-datahub-eks/tree/develop/assets/sap_data_hub_architecture.JPG)
+![Quick Start architecture for SAP DataHub on Amazon EKS](https://github.com/aws-quickstart/quickstart-sap-datahub-eks/tree/develop/assets/sap_data_hub_architecture.png)
 
 The deployment and configuration tasks are automated by AWS CloudFormation templates that you can customize during launch. 
 
