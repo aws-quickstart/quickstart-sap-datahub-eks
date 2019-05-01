@@ -8,6 +8,7 @@ SAP Data Hub provides a set of technologies for data orchestration, metadata man
 
 SAP products and applications such as SAP Business Suite, S/4HANA, SAP Business Warehouse (SAP BW), and SAP BW/4HANA, SAP SuccessFactors, SAP Cloud Platform can be connected with SAP Data Hub. 
 
+AWS services like Amazon S3 can also be integrated with SAP Data Hub on Amazon EKS.
 
 The Quick Start offers two deployment options:
 
