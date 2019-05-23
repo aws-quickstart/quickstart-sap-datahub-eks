@@ -62,6 +62,9 @@ else
         echo "2.4.1 - $SDH_VERSION"
 fi
 
+#clean-up files
+dos2unix /root/install/signal-final-status.sh
+
 #setup the kubectl configuration
 export KUBECONFIG="/root/.kube/config"
 
