@@ -21,6 +21,26 @@ You can also use the AWS CloudFormation templates as a starting point for your o
 
 The deployment and configuration tasks are automated by AWS CloudFormation templates that you can customize during launch. 
 
+To clone this repo, use the following steps:
+
+1) from your git client, type:
+
+	git clone  git@github.com:aws-quickstart/quickstart-sap-datahub-eks.git
+
+   This will create a directory called quickstart-sap-datahub-eks for you.
+
+2) while still using your git client, cd into the quickstart-sap-datahub-eks directory
+
+3) from the quickstart-sap-datahub-eks, type this command to update all the linked git submodules:
+
+	git submuodules update --init --remote --recursive
+
+4) now that all of the files have been cloned, you can modify them to meet your requirements or upload them as is into your Amazon S3 bucket:
+
+	aws sync sync quickstart-sap-datahub-eks s3://my-S3-bucket-name/quickstart-sap-datahub-eks/
+
+   Now that the files are in Amazon S3, you can run the Quick Start from your CloudFormation console.
+
 For architectural details, step-by-step instructions, and customization options please contact us.
 
 To post feedback, submit feature ideas, or report bugs, use the **Issues** section of this GitHub repo.
