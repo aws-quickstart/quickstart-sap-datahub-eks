@@ -29,11 +29,11 @@ To clone this repo, use the following steps:
 
    This will create a directory called quickstart-sap-datahub-eks for you.
 
-2) while still using your git client, cd into the quickstart-sap-datahub-eks directory
+2) while still using your git client, cd into the quickstart-sap-datahub-eks directory that was created for you after running the "git clone" command.
 
-3) from the quickstart-sap-datahub-eks, type this command to update all the linked git submodules:
+3) from inside the "quickstart-sap-datahub-eks" directory, type this command to update all the linked git submodules:
 
-	git submuodules update --init --remote --recursive
+	git submodule update --init --remote --recursive
 
 4) now that all of the files have been cloned, you can modify them to meet your requirements or upload them as is into your Amazon S3 bucket:
 
@@ -46,5 +46,4 @@ For architectural details, step-by-step instructions, and customization options 
 To post feedback, submit feature ideas, or report bugs, use the **Issues** section of this GitHub repo.
 
 If you'd like to submit code for this Quick Start, please review the [AWS Quick Start Contributor's Kit](https://aws-quickstart.github.io/).
-
 
