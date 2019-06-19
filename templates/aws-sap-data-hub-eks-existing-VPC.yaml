@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: SAP Data Hub on Amazon EKS new VPC
+Description: SAP Data Hub on Amazon EKS existing VPC
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -279,7 +279,7 @@ Parameters:
     Description: The ID of the private subnet in Availability Zone 3 in your existing VPC (e.g., subnet-abd39039)
   KubernetesVersion:
     Type: String
-    AllowedValues: [ "1.11", "1.10" ]
+    AllowedValues: [ "1.12", "1.11", "1.10" ]
     Default: "1.11"
     Description: Configures the version of kubernetes deployed in the Amazon EKS control plane
   SDHInstall:
@@ -289,7 +289,7 @@ Parameters:
     Default: true
   SDHVersion:
     Type: String
-    AllowedValues: [ "2.4", "2.4.1" ]
+    AllowedValues: [ "2.5", "2.4", "2.4.1" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
     Default: "2.4.1"
   SDHSwS3BucketName:
@@ -458,12 +458,22 @@ Resources:
                 Action:
                   - ecr:PutImage
                   - ecr:*Delete*
-                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nats-streaming"
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/nats*"
               - Effect: Allow
                 Action:
                   - ecr:PutImage
                   - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*vora*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                  - ecr:*Delete*
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*kaniko*"
+              - Effect: Allow
+                Action:
+                  - ecr:PutImage
+                  - ecr:*Delete*
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/*vsolution*"
               - Effect: Allow
                 Action: 
                   - s3:GetObject
