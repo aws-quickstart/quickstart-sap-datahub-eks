@@ -648,13 +648,16 @@ Resources:
       - ECRFluentd
       - ECRFluentdKub
       - ECRGrafana
+      - ECRGrafana1
       - ECRKibana
       - ECRKubeStateMetrics
+      - ECRKubeStateMetrics1
       - ECRNginx
       - ECRPromAlertManager
       - ECRPromNodeExp
       - ECRLinuxNodeExp
       - ECRPrometheus
+      - ECRPrometheus1
       - ECRPromPushGateway
       - ECRConsul
       - ECRNatsStreaming
