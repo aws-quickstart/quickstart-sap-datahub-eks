@@ -947,7 +947,7 @@ Resources:
     DependsOn: SDHInstance
     Properties:
       Handle: !Ref WaitForSDHInstallWaitHandle
-      Timeout: '14400'
+      Timeout: '18000'
   ECRStorageGateway:
     Condition: CreateECR
     Type: AWS::ECR::Repository
