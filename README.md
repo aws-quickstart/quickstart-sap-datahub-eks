@@ -37,7 +37,7 @@ To clone this repo, use the following steps:
 
 4) now that all of the files have been cloned, you can modify them to meet your requirements or upload them as is into your Amazon S3 bucket:
 
-	aws sync sync quickstart-sap-datahub-eks s3://my-S3-bucket-name/quickstart-sap-datahub-eks/
+	aws s3 sync quickstart-sap-datahub-eks s3://my-S3-bucket-name/quickstart-sap-datahub-eks/
 
    Now that the files are in Amazon S3, you can run the Quick Start from your CloudFormation console.
 
