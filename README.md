@@ -25,7 +25,7 @@ To clone this repo, use the following steps:
 
 1) from your git client, type:
 
-	git clone  git@github.com:aws-quickstart/quickstart-sap-datahub-eks.git
+	git clone git://github.com/aws-quickstart/quickstart-sap-datahub-eks.git	
 
    This will create a directory called quickstart-sap-datahub-eks for you.
 
