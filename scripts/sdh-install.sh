@@ -13,6 +13,8 @@
 #define global file locations
 CONFIG_FILE="/root/install/config"
 SDH_SW_TARGET="/tmp/SDH"
+HOME_DIR=$(grep root /etc/passwd | cut -d: -f6)
+export HOME="$HOME_DIR"
 
 #this is the min. size the s/w should be when downloaded
 SDH_TOTAL_SIZE="1840408"
