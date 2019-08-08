@@ -41,10 +41,10 @@ sysctl -w net.core.rmem_default=167772160
 sysctl -w net.core.wmem_max=1677721600
 sysctl -w net.core.wmem_default=167772160
 sysctl -w net.core.optmem_max=167772160
-sysctl -w net.ipv4.tcp_rmem=1677721600 1677721600 1677721600
-sysctl -w net.ipv4.tcp_wmem=1677721600 1677721600 1677721600
-sysctl -w net.ipv4.tcp_mem=1677721600 1677721600 1677721600
-sysctl -w net.ipv4.udp_mem=1677721600 1677721600 1677721600
+sysctl -w net.ipv4.tcp_rmem="1677721600 1677721600 1677721600"
+sysctl -w net.ipv4.tcp_wmem="1677721600 1677721600 1677721600"
+sysctl -w net.ipv4.tcp_mem="1677721600 1677721600 1677721600"
+sysctl -w net.ipv4.udp_mem="1677721600 1677721600 1677721600"
 
 
 sed -i '/config/d' "$CONFIG_FILE"
