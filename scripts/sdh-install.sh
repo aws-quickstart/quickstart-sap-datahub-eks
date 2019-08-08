@@ -520,7 +520,7 @@ else
         fi
 
         #validate SAP Data Hub installation
-        SDH_PODS=$(kubectl get pods -n datahub | wc -l)
+        SDH_PODS=$(kubectl get pods -n  "$SDH_NAME_SPACE" | wc -l)
 
         if [ "$SDH_PODS" -ge "$SDH_TOTAL_PODS" ]
         then
