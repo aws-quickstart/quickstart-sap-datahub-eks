@@ -154,19 +154,19 @@ then
 fi
 
 #create a default Kubernetes storage class for EKS version <1.11
-if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
-then
-        kubectl apply -f "$STORAGE_YAML"
+#if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
+#then
+#        kubectl apply -f "$STORAGE_YAML"
         
-fi
+#fi
 
 #download helm
 cd /tmp
 
 #match the helm version to the EKS version
-if [ "$EKS_CLUSTER_VERSION" == "1.10" ]
+if [ "$EKS_CLUSTER_VERSION" == "1.12" ]
 then
-        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.10.0-linux-amd64.tar.gz > helm-v2.10.0-linux-amd64.tar.gz
+        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.12.0-linux-amd64.tar.gz > helm-v2.10.0-linux-amd64.tar.gz
         
 fi
 
@@ -215,6 +215,9 @@ then
                 echo "Waiting for tiller pod to become Running"
                 sleep 15
                 let TILLER_LOOP_COUNT="$TILLER_LOOP_COUNT + 1"
+
+                #check tiller status again
+                HELM_POD_STATUS=$(kubectl get pods --all-namespaces | grep tiller | awk '{ print $4 }')
 
                 #Check to see we have exeucted the TILLER_LOOP_TOTAL, if we have then exit
                 if [[ "$TILLER_LOOP_COUNT" -eq "TILLER_LOOP_TOTAL" ]]
