@@ -245,6 +245,7 @@ Parameters:
       - r5.xlarge
       - r5.2xlarge
       - r5.4xlarge
+      - r5.8xlarge
     ConstraintDescription: Must be a valid EC2 instance type
     Description: Type of EC2 instance for the SDH Installation Host instance
     Type: String
@@ -388,6 +389,7 @@ Resources:
                 Action:
                   - ecr:GetAuthorizationToken
                   - ecr:BatchCheckLayerAvailability
+                  - ecr:CreateRepository
                   - ecr:GetDownloadUrlForLayer
                   - ecr:GetRepositoryPolicy
                   - ecr:DescribeRepositories
