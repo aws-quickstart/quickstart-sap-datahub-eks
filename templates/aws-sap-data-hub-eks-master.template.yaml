@@ -41,8 +41,6 @@ Metadata:
           - SDHSUserPass
           - SDHVoraPass
           - SDHSUserType
-          - SDHS3AccessKey
-          - SDHS3SecretAccessKey
           - SDHNameSpace
           - SDHCertDomainName
           - SDHELBPrivatePublic
@@ -116,10 +114,6 @@ Metadata:
         default: SAP Data Hub Vora user's Password
       SDHSUserType:
         default: SAP S-User type 
-      SDHS3AccessKey:
-        default: AWS IAM Access Key for S3 Checkpoint Bucket
-      SDHS3SecretAccessKey:
-        default: AWS IAM Secret Access Key for S3 Checkpoint Bucket
       SDHCertDomainName:
         default: SAP Data Hub Domain Name 
 Parameters:
@@ -305,9 +299,9 @@ Parameters:
     Type: String
   KubernetesVersion:
     Type: String
-    AllowedValues: [ "1.12", "1.11" ]
+    AllowedValues: [ "1.14", "1.13", "1.12" ]
     Description: Configures the version of kubernetes deployed in the Amazon EKS control plane
-    Default: "1.11"
+    Default: "1.12"
   SDHInstall:
     Type: String
     Description: "Do you want to run the SDH installation? Setting to false will provision everthing and get ready for a manual installation."
@@ -315,9 +309,9 @@ Parameters:
     Default: true
   SDHVersion:
     Type: String
-    AllowedValues: [ "2.6", "2.5", "2.4.1" ]
+    AllowedValues: [ "2.7", "2.6" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
-    Default: "2.4.1"
+    Default: "2.6"
   SDHSwS3BucketName:
     Type: String
     Description: The name of your S3 bucket where your SAP Data Hub software is stored. Do *NOT* include s3:// (use just your bucket name)
@@ -357,14 +351,6 @@ Parameters:
     AllowedValues: [ "S", "T" ]
     Description: Type of S-user in the SAP Docker Repository. (S=S-user, T=Technical-user)
     Default: "S"
-  SDHS3AccessKey:
-    Type: String
-    NoEcho: true
-    Description: The AWS IAM Access Key for your S3 Vora Checkpoint Store.
-  SDHS3SecretAccessKey:
-    Type: String
-    NoEcho: true
-    Description: The AWS IAM Secret Access Key for your S3 Vora Checkpoint Store.
   SDHCertDomainName:
     Type: String
     Description: Domain you want to use for your SAP Data Hub Ingress (TLS cert) 
@@ -442,8 +428,6 @@ Resources:
         SDHSUserPass: !Ref SDHSUserPass
         SDHVoraPass: !Ref SDHVoraPass
         SDHSUserType: !Ref SDHSUserType
-        SDHS3AccessKey: !Ref SDHS3AccessKey
-        SDHS3SecretAccessKey: !Ref SDHS3SecretAccessKey
         SDHCertDomainName: !Ref SDHCertDomainName
 Outputs:
   EKSClusterName:

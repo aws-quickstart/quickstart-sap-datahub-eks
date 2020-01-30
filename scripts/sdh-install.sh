@@ -17,7 +17,7 @@ HOME_DIR=$(grep root /etc/passwd | cut -d: -f6)
 export HOME="$HOME_DIR"
 
 #this is the min. size the s/w should be when downloaded
-SDH_TOTAL_SIZE="1840408"
+SDH_TOTAL_SIZE="140408"
 
 #this is the min. number of ECR repositories that should be created
 ECR_REPOS_COUNT="30"
@@ -55,30 +55,39 @@ source "$CONFIG_FILE"
 #remove the password and access keys from the config file after we have read it in
 sed -i '/SDH_S_USER_PASS/d' "$CONFIG_FILE"
 sed -i '/SDH_VORA_PASS/d'  "$CONFIG_FILE"
-sed -i '/SDH_ACCESS_KEY/d' "$CONFIG_FILE"
-sed -i '/SDH_SECRET_ACCESS_KEY/d'  "$CONFIG_FILE"
+#sed -i '/SDH_ACCESS_KEY/d' "$CONFIG_FILE"
+#sed -i '/SDH_SECRET_ACCESS_KEY/d'  "$CONFIG_FILE"
 
 #set variables based on which SAP Data Hub version we are installing
 
-if [ "$SDH_VERSION" == "2.4" ]
-then
-        echo "2.4 - $SDH_VERSION"
-
-        if [ "$EKS_CLUSTER_VERSION" == "1.11" ]
-        then
-                echo "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
-                echo "Choose SAP Data Hub version *2.4.1* if you want to run EKS version *1.11*"
-                echo "Check the SAP Data Hub Platform Availability Matrix for supported combinations"
-                echo "https://support.sap.com/content/dam/launchpad/en_us/pam/pam-essentials/SAP_Data_Hub_2_PAM.pdf"
-                bash -x /root/install/signal-final-status.sh 1 "The combination of SAP Data Hub version "$SDH_VERSION" and EKS version "$EKS_CLUSTER_VERSION" is *NOT* Supported by SAP -- EXITING"
-                exit 1
-        fi
-else
-        echo "2.4.1 - $SDH_VERSION"
-fi
-
 #clean-up files
 dos2unix /root/install/signal-final-status.sh
+
+#update the aws cli
+cd /tmp
+curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.zip"
+unzip awscli-bundle.zip
+sudo ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+cp /usr/local/bin/aws /bin
+chmod 755 /bin/aws
+
+
+#download kubectl
+
+if [[ "$SDH_VERSION" == "2.6" ]]
+then
+    cd /tmp
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/linux/amd64/kubectl
+    chmod 755 /tmp/kubectl
+    cp /tmp/kubectl /bin
+    chmod 755 /bin/kubectl
+else
+    cd /tmp
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl
+    chmod 755 /tmp/kubectl
+    cp /tmp/kubectl /bin
+    chmod 755 /bin/kubectl
+fi
 
 #setup the kubectl configuration
 export KUBECONFIG="/root/.kube/config"
@@ -161,29 +170,32 @@ fi
 #fi
 
 #download helm
-cd /tmp
-
-#match the helm version to the EKS version
-if [ "$EKS_CLUSTER_VERSION" == "1.12" ]
+if [[ "$SDH_VERSION" == "2.6" ]]
 then
-        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.12.0-linux-amd64.tar.gz > helm-v2.10.0-linux-amd64.tar.gz
-        
+
+    cd /tmp
+    curl https://storage.googleapis.com/kubernetes-helm/helm-v2.12.0-linux-amd64.tar.gz > helm-v2.12.0-linux-amd64.tar.gz
+
+    #unpack and copy the helm executable
+    gzip -fd helm-*.gz
+
+    tar -xvf helm-*.tar
+
+    cp linux-amd64/helm /bin
+    chmod 755 /bin/helm
+else
+    cd /tmp
+
+    curl https://storage.googleapis.com/kubernetes-helm/helm-v2.13.0-linux-amd64.tar.gz > helm-v2.13.0-linux-amd64.tar.gz
+
+    #unpack and copy the helm executable
+    gzip -fd helm-*.gz
+
+    tar -xvf helm-*.tar
+
+    cp linux-amd64/helm /bin
+    chmod 755 /bin/helm
 fi
-
-if [ "$EKS_CLUSTER_VERSION" == "1.11" ]
-then
-        curl https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz > helm-v2.11.0-linux-amd64.tar.gz
-
-        
-fi
-
-#unpack and copy the helm executable
-gzip -fd helm-*.gz
-
-tar -xvf helm-*.tar
-
-cp linux-amd64/helm /usr/bin
-chmod 755 /usr/bin/helm
 
 #apply the helm role to our EKS Cluster
 kubectl apply -f $HELM_YAML
@@ -332,6 +344,15 @@ then
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/vsolution-textanalysis --tags Key=stack,Value=${STACK_ID}  --region $REGION
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/vsystem-hana-init --tags Key=stack,Value=${STACK_ID}  --region $REGION
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/kaniko-project/executor --tags Key=stack,Value=${STACK_ID}  --region $REGION
+    #SDH 2.7 repositories
+    #https://help.sap.com/viewer/e66c399612e84a83a8abe97c0eeb443a/2.7.latest/en-US/faff65095cbe44a1a783e6121e89f1df.html?q=repository
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/hana --tags Key=stack,Value=${STACK_ID} --region $REGION
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/sles --tags Key=stack,Value=${STACK_ID} --region $REGION
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/vsystem-vrep-csi --tags Key=stack,Value=${STACK_ID} --region $REGION
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/code-server --tags Key=stack,Value=${STACK_ID} --region $REGION
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/axino-service --tags Key=stack,Value=${STACK_ID} --region $REGION
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/vsolution-spark_on_k8s --tags Key=stack,Value=${STACK_ID} --region $REGION
+aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/rbase   --tags Key=stack,Value=${STACK_ID} --region
 fi
 
 
@@ -357,7 +378,7 @@ then
         exit 1
 fi
 
-ECR_NAME=$(aws ecr describe-repositories --region $REGION --output text | tail -1 | awk '{ print $NF }' | awk -F "/" '{ print $1 }')
+ECR_NAME=$(aws ecr describe-repositories --region $REGION --output text | grep repository | tail -1 | awk '{ print $NF }' | awk -F "/" '{ print $1 }')
 
 #cd to the s/w location
 cd "$SDH_SW_TARGET" 
@@ -369,44 +390,17 @@ then
         exit 0
 else
 
-        if [ "$SDH_ENABLE_CHECKPOINT" == "true" ]
-        then
-            #enable below for checkpoint store and ECR role integration
-            if [ "$SDH_S_USER_TYPE" == "T" ]
-            then
-                if [ "$SDH_VERSION" == "2.5" ]
-                then
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
-                else
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
-                fi
-            else
-                if [ "$SDH_VERSION" == "2.5" ]
-                then
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
-                else
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0' --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store yes --checkpoint-store-type s3 --validate-checkpoint-store no --checkpoint-store-connection "https://s3.amazonaws.com/${SDH_CHECKPOINT_STORE}/checkpoint&AccessKey=${SDH_ACCESS_KEY}&SecretAccessKey=${SDH_SECRET_ACCESS_KEY}&Region=${REGION}" 
-                fi
-            fi
-        else
             if [ "$SDH_S_USER_TYPE" == "T" ]
             then
             #enable below for ECR role integration
-                if [ "$SDH_VERSION" == "2.5" ]
-                then
+
                     bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
-                else
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
-                fi
+
             else
-                if [ "$SDH_VERSION" == "2.5" ]
-                then
+
                     bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
-                else
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=2  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
-                fi
+
             fi
-        fi
         #create custom cert for the Ingress controller
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=*${SDH_CERT_DOMAIN_NAME}"
         kubectl -n $SDH_NAME_SPACE create secret tls vsystem-tls-certs --key /tmp/tls.key --cert /tmp/tls.crt
@@ -416,17 +410,27 @@ else
         #for a public internet-facing ELB
         if [ "$SDH_ELB_PRIVPUB" == "PUBLIC" ]
         then
-                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
-                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/service-l4.yaml
-                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/patch-configmap-l4.yaml
+                #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+                #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/service-l4.yaml
+                #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/patch-configmap-l4.yaml
+                #
+                #
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.24.1/deploy/mandatory.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.24.1/deploy/provider/aws/service-l4.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.24.1/deploy/provider/aws/patch-configmap-l4.yaml
         fi
 
         #for private ELB
         if [ "$SDH_ELB_PRIVPUB" == "PRIVATE" ]
         then
-                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+                #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml
+                #kubectl apply -f /root/install/private-elb.yaml
+                #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/patch-configmap-l4.yaml
+                #
+                #
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.24.1/deploy/mandatory.yaml
                 kubectl apply -f /root/install/private-elb.yaml
-                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/aws/patch-configmap-l4.yaml
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.24.1/deploy/provider/aws/patch-configmap-l4.yaml
         fi
 
         

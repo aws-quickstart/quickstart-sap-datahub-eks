@@ -13,6 +13,7 @@ Metadata:
           default: Amazon EC2 configuration
         Parameters:
           - KeyPairName
+          - NodeAMIOS
       - Label:
           default: EKS configuration
         Parameters:
@@ -33,9 +34,6 @@ Metadata:
           - SDHSUserPass
           - SDHVoraPass
           - SDHSUserType
-          - SDHCheckPointS3Bucket
-          - SDHS3AccessKey
-          - SDHS3SecretAccessKey
           - SDHNameSpace
           - SDHCertDomainName
           - SDHELBPrivatePublic
@@ -51,6 +49,8 @@ Metadata:
         default: EKS Cluster Name
       KeyPairName:
         default: SSH key name
+      NodeAMIOS:
+        default: Node AMI Operating System
       QSS3BucketName:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
@@ -81,8 +81,6 @@ Metadata:
         default: Install the SAP Data Hub?
       SDHVersion:
         default: SAP Data Hub version
-      SDHCheckPointS3Bucket:
-        default: S3 Bucket name of SAP Data Hub CheckPoint store
       SDHSwS3BucketName:
         default: S3 Bucket name of SAP Data Hub s/w
       SDHSwS3PrefixName:
@@ -101,13 +99,62 @@ Metadata:
         default: SAP Data Hub Vora user's Password
       SDHSUserType:
         default: SAP S-User type 
-      SDHS3AccessKey:
-        default: AWS IAM Access Key for S3 Checkpoint Bucket
-      SDHS3SecretAccessKey:
-        default: AWS IAM Secret Access Key for S3 Checkpoint Bucket
       SDHCertDomainName:
         default: SAP Data Hub Domain Name
+  AWSAMIRegionMap:
+    Filters:
+      AMZNEKS114:
+        name: 'amazon-eks-node-1.14-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS114GPU:
+        name: 'amazon-eks-gpu-node-1.14-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS113:
+        name: 'amazon-eks-node-1.13-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS113GPU:
+        name: 'amazon-eks-gpu-node-1.13-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS111:
+        name: 'amazon-eks-node-1.11-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS111GPU:
+        name: 'amazon-eks-gpu-node-1.11-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS112:
+        name: 'amazon-eks-node-1.12-v20??????'
+        owner-id: '602401143452'
+      AMZNEKS112GPU:
+        name: 'amazon-eks-gpu-node-1.12-v20??????'
+        owner-id: '602401143452'
+      SLES15EKS114:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS114GPU:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS113:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS113GPU:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS111:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS111GPU:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS112:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
+      SLES15EKS112GPU:
+        name: 'suse-sles-15-v20??????-hvm-ssd-x86_64'
+        owner-id: '013907871322'
 Parameters:
+  CustomAmiId:
+    Type: String
+    Default: ""
   EKSClusterName:
     Description: The name of an existing EKS Cluster
     Type: String
@@ -115,6 +162,12 @@ Parameters:
     Description: The name of an existing public/private key pair, which allows you
       to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
+  NodeAMIOS:
+    AllowedValues:
+      - Amazon-Linux-HVM
+      - SUSE-SLES-15-HVM
+    Default: Amazon-Linux-HVM
+    Type: String
   NodeInstanceTypeSDH:
     Default: r4.xlarge
     AllowedValues:
@@ -154,8 +207,8 @@ Parameters:
     Description: The ID of the private subnet in an Availability Zone in your existing VPC (e.g., subnet-fe9a8b32)
   KubernetesVersion:
     Type: String
-    AllowedValues: [ "1.12", "1.11" ]
-    Default: "1.11"
+    AllowedValues: [ "1.14", "1.13", "1.12" ]
+    Default: "1.12"
     Description: Your existing EKS version
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -188,13 +241,9 @@ Parameters:
     Default: true
   SDHVersion:
     Type: String
-    AllowedValues: [ "2.6", "2.5", "2.4.1" ]
+    AllowedValues: [ "2.7", "2.6" ]
     Description: Version of SAP Data Hub deployed in the Amazon EKS cluster. **NOTE**, SDH 2.4 is *NOT* compatible with EKS 1.11. See SAP Note "#2686169"
-    Default: "2.4.1"
-  SDHCheckPointS3Bucket:
-    Type: String
-    Description: The name of your *existing* S3 bucket where your SAP Data Hub CheckPoint will be stored. Do *NOT* include s3:// (use just your bucket name)
-    Default: "my-sdh-checkpoint"
+    Default: "2.6"
   SDHSwS3BucketName:
     Type: String
     Description: The name of your S3 bucket where your SAP Data Hub software is stored. Do *NOT* include s3:// (use just your bucket name)
@@ -234,14 +283,6 @@ Parameters:
     AllowedValues: [ "S", "T" ]
     Description: Type of S-user in the SAP Docker Repository. (S=S-user, T=Technical-user)
     Default: "S"
-  SDHS3AccessKey:
-    Type: String
-    NoEcho: true
-    Description: The AWS IAM Access Key for your S3 Vora Checkpoint Store.
-  SDHS3SecretAccessKey:
-    Type: String
-    NoEcho: true
-    Description: The AWS IAM Secret Access Key for your S3 Vora Checkpoint Store.
   SDHCertDomainName:
     Type: String
     Description: The domain you want to use for your SAP Data Hub system 
@@ -249,14 +290,21 @@ Parameters:
 Mappings:
   K8sVersionMap:
     "1.12":
-      STD: AMZNEKS112
-      GPU: AMZNEKS112GPU
+      BinaryPath: 1.12.10/2019-08-14/bin/linux/amd64
+      STD: EKS112
+      GPU: EKS112GPU
     "1.11":
-      STD: AMZNEKS111
-      GPU: AMZNEKS111GPU
-    "1.10":
-      STD: AMZNEKS110
-      GPU: AMZNEKS110GPU
+      BinaryPath: 1.11.10/2019-08-14/bin/linux/amd64
+      STD: EKS111
+      GPU: EKS111GPU
+    "1.13":
+      BinaryPath: 1.13.8/2019-08-14/bin/linux/amd64
+      STD: EKS113
+      GPU: EKS113GPU
+    "1.14":
+      BinaryPath: 1.14.6/2019-08-22/bin/linux/amd64
+      STD: EKS114
+      GPU: EKS114GPU
   InstanceTypes:
     t2.small: { Type: STD }
     t2.medium: { Type: STD }
@@ -338,179 +386,248 @@ Mappings:
     z1d.3xlarge: { Type: STD }
     z1d.6xlarge: { Type: STD }
     z1d.12xlarge: { Type: STD }
+  OStoK8sVersionMap:
+    Amazon-Linux-HVM:
+      EKS112: AMZNEKS112
+      EKS112GPU: AMZNEKS112GPU
+      EKS111: AMZNEKS111
+      EKS111GPU: AMZNEKS111GPU
+      EKS113: AMZNEKS113
+      EKS113GPU: AMZNEKS113GPU
+      EKS114: AMZNEKS114
+      EKS114GPU: AMZNEKS114GPU
+    SUSE-SLES-15-HVM:
+      EKS112: SLES15EKS112
+      EKS112GPU: SLES15EKS112GPU
+      EKS111: SLES15EKS111
+      EKS111GPU: SLES15EKS111GPU
+      EKS113: SLES15EKS113
+      EKS113GPU: SLES15EKS113GPU
+      EKS114: SLES15EKS114
+      EKS114GPU: SLES15EKS114GPU
   AWSAMIRegionMap:
-    AMI:
-      AMZNEKS112: amazon-eks-node-1.12-v20
-      AMZNEKS112GPU: amazon-eks-gpu-node-1.12-v20
-      AMZNEKS111: amazon-eks-node-1.11-v20
-      AMZNEKS111GPU: amazon-eks-gpu-node-1.11-v20
-      AMZNEKS110: amazon-eks-node-1.10-v20
-      AMZNEKS110GPU: amazon-eks-gpu-node-1.10-v20
     ap-northeast-1:
-      AMZNEKS110: ami-0c9fb6a3fda95d373
-      AMZNEKS110GPU: ami-073f06a1edd22ae2e
-      AMZNEKS111: ami-0d555d5f56c843803
-      AMZNEKS111GPU: ami-07fc636e8f6d3e18b
-      AMZNEKS112: ami-0bfedee6a7845c26d
-      AMZNEKS112GPU: ami-08e41cc84f4b3f27f
-      SLES15EKS110: ami-0e2debab987f825c8
-      SLES15EKS110GPU: ami-0e2debab987f825c8
-      SLES15EKS111: ami-0e2debab987f825c8
-      SLES15EKS111GPU: ami-0e2debab987f825c8
-      SLES15EKS112: ami-0e2debab987f825c8
-      SLES15EKS112GPU: ami-0e2debab987f825c8
+      AMZNEKS114: ami-07296175bc6b826a5
+      AMZNEKS114GPU: ami-0e4846cf3cb2440e5
+      AMZNEKS113: ami-091dd4fc36f238059
+      AMZNEKS113GPU: ami-0f0b710ce601d5a06
+      AMZNEKS111: ami-0c99d24d50a031622
+      AMZNEKS111GPU: ami-0d6439e33cef30715
+      AMZNEKS112: ami-0c892d7d66c48f7c8
+      AMZNEKS112GPU: ami-09e057b78700b6084
+      SLES15EKS114: ami-056ac8ad44e6a7e1f
+      SLES15EKS114GPU: ami-056ac8ad44e6a7e1f
+      SLES15EKS113: ami-056ac8ad44e6a7e1f
+      SLES15EKS113GPU: ami-056ac8ad44e6a7e1f
+      SLES15EKS111: ami-056ac8ad44e6a7e1f
+      SLES15EKS111GPU: ami-056ac8ad44e6a7e1f
+      SLES15EKS112: ami-056ac8ad44e6a7e1f
+      SLES15EKS112GPU: ami-056ac8ad44e6a7e1f
     ap-northeast-2:
-      AMZNEKS110: ami-00ea4ea959f28b4cf
-      AMZNEKS110GPU: ami-0baff950f5217e54e
-      AMZNEKS111: ami-0144ae839b1111571
-      AMZNEKS111GPU: ami-002057772097fcef9
-      AMZNEKS112: ami-0a904348b703e620c
-      AMZNEKS112GPU: ami-0c43b885e33fdc29e
-      SLES15EKS110: ami-066d5639c834dd062
-      SLES15EKS110GPU: ami-066d5639c834dd062
-      SLES15EKS111: ami-066d5639c834dd062
-      SLES15EKS111GPU: ami-066d5639c834dd062
-      SLES15EKS112: ami-066d5639c834dd062
-      SLES15EKS112GPU: ami-066d5639c834dd062
+      AMZNEKS114: ami-0fa890749e8c893c0
+      AMZNEKS114GPU: ami-0bfd27f77f9bf86b3
+      AMZNEKS113: ami-01eb7af276f43d03d
+      AMZNEKS113GPU: ami-06cc9975bcb45fae3
+      AMZNEKS111: ami-0f826df7ab4f48df2
+      AMZNEKS111GPU: ami-0ec6b5f4cc27d39aa
+      AMZNEKS112: ami-0509ab452dcd63f43
+      AMZNEKS112GPU: ami-0bc32c46ba9b38888
+      SLES15EKS114: ami-0f81fff879bafe6b8
+      SLES15EKS114GPU: ami-0f81fff879bafe6b8
+      SLES15EKS113: ami-0f81fff879bafe6b8
+      SLES15EKS113GPU: ami-0f81fff879bafe6b8
+      SLES15EKS111: ami-0f81fff879bafe6b8
+      SLES15EKS111GPU: ami-0f81fff879bafe6b8
+      SLES15EKS112: ami-0f81fff879bafe6b8
+      SLES15EKS112GPU: ami-0f81fff879bafe6b8
     ap-south-1:
-      AMZNEKS110: ami-0f07478f5c5eb9e20
-      AMZNEKS110GPU: ami-033bd2c2a3431923e
-      AMZNEKS111: ami-02071c0110dc365ba
-      AMZNEKS111GPU: ami-04fe7f4c75aac7196
-      AMZNEKS112: ami-09c3eb35bb3be46a4
-      AMZNEKS112GPU: ami-0d3ecaf4f3318c714
+      AMZNEKS114: ami-096122757b4163b0e
+      AMZNEKS114GPU: ami-08a65b6849b5d0131
+      AMZNEKS113: ami-062a2b4b93aaf43a0
+      AMZNEKS113GPU: ami-01581a1df59e009c3
+      AMZNEKS111: ami-030132e3fbe43fd51
+      AMZNEKS111GPU: ami-0e22cd77bb5322fcc
+      AMZNEKS112: ami-041504109ee98ddd7
+      AMZNEKS112GPU: ami-03f71141f8bf47701
     ap-southeast-1:
-      AMZNEKS110: ami-05dac5d0ada75e22f
-      AMZNEKS110GPU: ami-09defa93988984fa1
-      AMZNEKS111: ami-00c91afdb73cf7f93
-      AMZNEKS111GPU: ami-08d5da0b12751a31f
-      AMZNEKS112: ami-07b922b9b94d9a6d2
-      AMZNEKS112GPU: ami-0655b4dbbe2d46703
-      SLES15EKS110: ami-05e20e49e8b150b28
-      SLES15EKS110GPU: ami-05e20e49e8b150b28
-      SLES15EKS111: ami-05e20e49e8b150b28
-      SLES15EKS111GPU: ami-05e20e49e8b150b28
-      SLES15EKS112: ami-05e20e49e8b150b28
-      SLES15EKS112GPU: ami-05e20e49e8b150b28
+      AMZNEKS114: ami-024ce53b56277d5d5
+      AMZNEKS114GPU: ami-024a58dc3e6f0d78b
+      AMZNEKS113: ami-0c07dba3bf60e6ccd
+      AMZNEKS113GPU: ami-002999b2f9103152a
+      AMZNEKS111: ami-0eafc4ec712e71000
+      AMZNEKS111GPU: ami-01513190999da3648
+      AMZNEKS112: ami-009ec8dd35b7e044b
+      AMZNEKS112GPU: ami-04e66e5c13dafa188
+      SLES15EKS114: ami-070356c21596ddc67
+      SLES15EKS114GPU: ami-070356c21596ddc67
+      SLES15EKS113: ami-070356c21596ddc67
+      SLES15EKS113GPU: ami-070356c21596ddc67
+      SLES15EKS111: ami-070356c21596ddc67
+      SLES15EKS111GPU: ami-070356c21596ddc67
+      SLES15EKS112: ami-070356c21596ddc67
+      SLES15EKS112GPU: ami-070356c21596ddc67
     ap-southeast-2:
-      AMZNEKS110: ami-00513f18e1900ce1e
-      AMZNEKS110GPU: ami-00d9364d705e902c9
-      AMZNEKS111: ami-05f4510fcfe56961c
-      AMZNEKS111GPU: ami-04024dd8e0b9e36ff
-      AMZNEKS112: ami-0f0121e9e64ebd3dc
-      AMZNEKS112GPU: ami-07079cd9ff1b312da
-      SLES15EKS110: ami-05283f9ba716bfbdc
-      SLES15EKS110GPU: ami-05283f9ba716bfbdc
-      SLES15EKS111: ami-05283f9ba716bfbdc
-      SLES15EKS111GPU: ami-05283f9ba716bfbdc
-      SLES15EKS112: ami-05283f9ba716bfbdc
-      SLES15EKS112GPU: ami-05283f9ba716bfbdc
+      AMZNEKS114: ami-029318fe7c3a1664b
+      AMZNEKS114GPU: ami-0b24ff00f0fb4b71f
+      AMZNEKS113: ami-0a83a14bcdd56d43d
+      AMZNEKS113GPU: ami-04b5d21eabfea81e4
+      AMZNEKS111: ami-07c634154242945bb
+      AMZNEKS111GPU: ami-0c1aea0fd2ad60256
+      AMZNEKS112: ami-015682376e8bc2170
+      AMZNEKS112GPU: ami-0a8f37eb75d55fcac
+      SLES15EKS114: ami-0c4245381c67efb39
+      SLES15EKS114GPU: ami-0c4245381c67efb39
+      SLES15EKS113: ami-0c4245381c67efb39
+      SLES15EKS113GPU: ami-0c4245381c67efb39
+      SLES15EKS111: ami-0c4245381c67efb39
+      SLES15EKS111GPU: ami-0c4245381c67efb39
+      SLES15EKS112: ami-0c4245381c67efb39
+      SLES15EKS112GPU: ami-0c4245381c67efb39
     eu-central-1:
-      AMZNEKS110: ami-03bdf8079f6c013c5
-      AMZNEKS110GPU: ami-0a8536a894bd4ea06
-      AMZNEKS111: ami-0c2709025eb548246
-      AMZNEKS111GPU: ami-0bf09c13f4204ce9d
-      AMZNEKS112: ami-0d741ed58ca5b342e
-      AMZNEKS112GPU: ami-0c57db5b204001099
-      SLES15EKS110: ami-049da412f8aa4402a
-      SLES15EKS110GPU: ami-049da412f8aa4402a
-      SLES15EKS111: ami-049da412f8aa4402a
-      SLES15EKS111GPU: ami-049da412f8aa4402a
-      SLES15EKS112: ami-049da412f8aa4402a
-      SLES15EKS112GPU: ami-049da412f8aa4402a
+      AMZNEKS114: ami-07034b303e1ffc843
+      AMZNEKS114GPU: ami-08b45c59715f94f5f
+      AMZNEKS113: ami-0085eefa9ec412d21
+      AMZNEKS113GPU: ami-071b676ce3b3b343e
+      AMZNEKS111: ami-0f8a9273eb472cbf7
+      AMZNEKS111GPU: ami-0c22a384b14acad0a
+      AMZNEKS112: ami-00a46e20956ca4a15
+      AMZNEKS112GPU: ami-0f3cdd1153555d766
+      SLES15EKS114: ami-05dfd265ea534a3e9
+      SLES15EKS114GPU: ami-05dfd265ea534a3e9
+      SLES15EKS113: ami-05dfd265ea534a3e9
+      SLES15EKS113GPU: ami-05dfd265ea534a3e9
+      SLES15EKS111: ami-05dfd265ea534a3e9
+      SLES15EKS111GPU: ami-05dfd265ea534a3e9
+      SLES15EKS112: ami-05dfd265ea534a3e9
+      SLES15EKS112GPU: ami-05dfd265ea534a3e9
     eu-north-1:
-      AMZNEKS110: ami-0be77fe86d741fc81
-      AMZNEKS110GPU: ami-05baf7a6c293fe2ed
-      AMZNEKS111: ami-084bd3569d08c6e67
-      AMZNEKS111GPU: ami-0a1714bb5be631b59
-      AMZNEKS112: ami-0c65a309fc58f6907
-      AMZNEKS112GPU: ami-09354b076296f5946
-      SLES15EKS110: ami-07a30c77d27e8e56e
-      SLES15EKS110GPU: ami-07a30c77d27e8e56e
-      SLES15EKS111: ami-07a30c77d27e8e56e
-      SLES15EKS111GPU: ami-07a30c77d27e8e56e
-      SLES15EKS112: ami-07a30c77d27e8e56e
-      SLES15EKS112GPU: ami-07a30c77d27e8e56e
+      AMZNEKS114: ami-0faf5ca58065599bc
+      AMZNEKS114GPU: ami-06f065fbe98f1b3a5
+      AMZNEKS113: ami-0dec739645f0ac8c9
+      AMZNEKS113GPU: ami-092b38a91b1c63089
+      AMZNEKS111: ami-0c461d559174a3015
+      AMZNEKS111GPU: ami-05eeb7b25f89031fb
+      AMZNEKS112: ami-02e4d88b448d1181e
+      AMZNEKS112GPU: ami-0eabd4dd4a214a6b0
+      SLES15EKS114: ami-0741fa1a008af40ad
+      SLES15EKS114GPU: ami-0741fa1a008af40ad
+      SLES15EKS113: ami-0741fa1a008af40ad
+      SLES15EKS113GPU: ami-0741fa1a008af40ad
+      SLES15EKS111: ami-0741fa1a008af40ad
+      SLES15EKS111GPU: ami-0741fa1a008af40ad
+      SLES15EKS112: ami-0741fa1a008af40ad
+      SLES15EKS112GPU: ami-0741fa1a008af40ad
     eu-west-1:
-      AMZNEKS110: ami-06368da7f495b68e9
-      AMZNEKS110GPU: ami-0f6f3929a9d7a418e
-      AMZNEKS111: ami-0e82e73403dd69fa3
-      AMZNEKS111GPU: ami-0b4d0f56587640d5a
-      AMZNEKS112: ami-08716b70cac884aaa
-      AMZNEKS112GPU: ami-0fbc930681258db86
-      SLES15EKS110: ami-0e9af5d23652a4a80
-      SLES15EKS110GPU: ami-0e9af5d23652a4a80
-      SLES15EKS111: ami-0e9af5d23652a4a80
-      SLES15EKS111GPU: ami-0e9af5d23652a4a80
-      SLES15EKS112: ami-0e9af5d23652a4a80
-      SLES15EKS112GPU: ami-0e9af5d23652a4a80
+      AMZNEKS114: ami-0b9d2c11b47bd8264
+      AMZNEKS114GPU: ami-03b8e736123fd2b9b
+      AMZNEKS113: ami-03772b2e67db0c87b
+      AMZNEKS113GPU: ami-0238f5c2b74750b14
+      AMZNEKS111: ami-0eb6419458800872a
+      AMZNEKS111GPU: ami-019ca3c955e6dc7e9
+      AMZNEKS112: ami-05961b098762d431f
+      AMZNEKS112GPU: ami-01133c5344c522d27
+      SLES15EKS114: ami-0a58a1b152ba55f1d
+      SLES15EKS114GPU: ami-0a58a1b152ba55f1d
+      SLES15EKS113: ami-0a58a1b152ba55f1d
+      SLES15EKS113GPU: ami-0a58a1b152ba55f1d
+      SLES15EKS111: ami-0a58a1b152ba55f1d
+      SLES15EKS111GPU: ami-0a58a1b152ba55f1d
+      SLES15EKS112: ami-0a58a1b152ba55f1d
+      SLES15EKS112GPU: ami-0a58a1b152ba55f1d
     eu-west-2:
-      AMZNEKS110: ami-0f1f2189b4741bc60
-      AMZNEKS110GPU: ami-0a12396b818bc2383
-      AMZNEKS111: ami-0da9aa88dd2ec8297
-      AMZNEKS111GPU: ami-00e98f9e6fd2319e5
-      AMZNEKS112: ami-0c7388116d474ee10
-      AMZNEKS112GPU: ami-0d832fced2cfe0f7b
-      SLES15EKS110: ami-0876188b59dd1fb0d
-      SLES15EKS110GPU: ami-0876188b59dd1fb0d
-      SLES15EKS111: ami-0876188b59dd1fb0d
-      SLES15EKS111GPU: ami-0876188b59dd1fb0d
-      SLES15EKS112: ami-0876188b59dd1fb0d
-      SLES15EKS112GPU: ami-0876188b59dd1fb0d
+      AMZNEKS114: ami-0726488afbd16de79
+      AMZNEKS114GPU: ami-03a9c642e26334ac0
+      AMZNEKS113: ami-09b6f282fa8a688fe
+      AMZNEKS113GPU: ami-01c1cd2a68c13b51f
+      AMZNEKS111: ami-04d2d145922337cea
+      AMZNEKS111GPU: ami-0e12fe4b01434ff0e
+      AMZNEKS112: ami-0b72f4c68143942d3
+      AMZNEKS112GPU: ami-01527acf6f02de705
+      SLES15EKS114: ami-01497522185aaa4ee
+      SLES15EKS114GPU: ami-01497522185aaa4ee
+      SLES15EKS113: ami-01497522185aaa4ee
+      SLES15EKS113GPU: ami-01497522185aaa4ee
+      SLES15EKS111: ami-01497522185aaa4ee
+      SLES15EKS111GPU: ami-01497522185aaa4ee
+      SLES15EKS112: ami-01497522185aaa4ee
+      SLES15EKS112GPU: ami-01497522185aaa4ee
     eu-west-3:
-      AMZNEKS110: ami-03a9acb0f6e0d424d
-      AMZNEKS110GPU: ami-086d5edcaacd0ccfd
-      AMZNEKS111: ami-099369bc73d1cc66f
-      AMZNEKS111GPU: ami-0039e2556e6290828
-      AMZNEKS112: ami-0560aea042fec8b12
-      AMZNEKS112GPU: ami-0f8fa088b406ebba2
-      SLES15EKS110: ami-0ae7860e976047351
-      SLES15EKS110GPU: ami-0ae7860e976047351
-      SLES15EKS111: ami-0ae7860e976047351
-      SLES15EKS111GPU: ami-0ae7860e976047351
-      SLES15EKS112: ami-0ae7860e976047351
-      SLES15EKS112GPU: ami-0ae7860e976047351
+      AMZNEKS114: ami-0649adce0eb85876e
+      AMZNEKS114GPU: ami-05e2c706ec723b102
+      AMZNEKS113: ami-0db9a057d2e5a2554
+      AMZNEKS113GPU: ami-0cf47cf38c28dbf82
+      AMZNEKS111: ami-03f4980a908c5eccd
+      AMZNEKS111GPU: ami-00422951a20adb4a4
+      AMZNEKS112: ami-0f7f1b6f6f16ce81b
+      AMZNEKS112GPU: ami-097c880e04cf85bf5
+      SLES15EKS114: ami-0f238bd4c6fdbefb0
+      SLES15EKS114GPU: ami-0f238bd4c6fdbefb0
+      SLES15EKS113: ami-0f238bd4c6fdbefb0
+      SLES15EKS113GPU: ami-0f238bd4c6fdbefb0
+      SLES15EKS111: ami-0f238bd4c6fdbefb0
+      SLES15EKS111GPU: ami-0f238bd4c6fdbefb0
+      SLES15EKS112: ami-0f238bd4c6fdbefb0
+      SLES15EKS112GPU: ami-0f238bd4c6fdbefb0
     us-east-1:
-      AMZNEKS110: ami-03a1e71fb42fc37dd
-      AMZNEKS110GPU: ami-00f74c3728d4ca27d
-      AMZNEKS111: ami-02c1de421df89c58d
-      AMZNEKS111GPU: ami-06ec2ea207616c078
-      AMZNEKS112: ami-0abcb9f9190e867ab
-      AMZNEKS112GPU: ami-0cb7959f92429410a
-      SLES15EKS110: ami-0f26c5cd74a4707b4
-      SLES15EKS110GPU: ami-0f26c5cd74a4707b4
-      SLES15EKS111: ami-0f26c5cd74a4707b4
-      SLES15EKS111GPU: ami-0f26c5cd74a4707b4
-      SLES15EKS112: ami-0f26c5cd74a4707b4
-      SLES15EKS112GPU: ami-0f26c5cd74a4707b4
+      AMZNEKS114: ami-087a82f6b78a07557
+      AMZNEKS114GPU: ami-0730212bffaa1732a
+      AMZNEKS113: ami-002ee751a46c73abc
+      AMZNEKS113GPU: ami-0be4d1a45d5336fc9
+      AMZNEKS111: ami-0ab75073588fdfe5d
+      AMZNEKS111GPU: ami-09424656610ed8cb5
+      AMZNEKS112: ami-007092a89ede24e62
+      AMZNEKS112GPU: ami-0196913a4743888c0
+      SLES15EKS114: ami-0b1764f3d7d2e2316
+      SLES15EKS114GPU: ami-0b1764f3d7d2e2316
+      SLES15EKS113: ami-0b1764f3d7d2e2316
+      SLES15EKS113GPU: ami-0b1764f3d7d2e2316
+      SLES15EKS111: ami-0b1764f3d7d2e2316
+      SLES15EKS111GPU: ami-0b1764f3d7d2e2316
+      SLES15EKS112: ami-0b1764f3d7d2e2316
+      SLES15EKS112GPU: ami-0b1764f3d7d2e2316
     us-east-2:
-      AMZNEKS110: ami-093d55c2ba99ab2c8
-      AMZNEKS110GPU: ami-0a788defb66cdfffb
-      AMZNEKS111: ami-03b1b6cc34c010f9c
-      AMZNEKS111GPU: ami-0e6993a35aae3407b
-      AMZNEKS112: ami-04ea7cb66af82ae4a
-      AMZNEKS112GPU: ami-0118b61dc2312dee2
-      SLES15EKS110: ami-0eecb5f7387df7711
-      SLES15EKS110GPU: ami-0eecb5f7387df7711
-      SLES15EKS111: ami-0eecb5f7387df7711
-      SLES15EKS111GPU: ami-0eecb5f7387df7711
-      SLES15EKS112: ami-0eecb5f7387df7711
-      SLES15EKS112GPU: ami-0eecb5f7387df7711
+      AMZNEKS114: ami-080fbb09ee2d4d3fa
+      AMZNEKS114GPU: ami-095e1b9737cfe76bc
+      AMZNEKS113: ami-07f54fc065c3da9d7
+      AMZNEKS113GPU: ami-0c8d3734ac06376e4
+      AMZNEKS111: ami-0c927b6bd36656446
+      AMZNEKS111GPU: ami-0961a68fdef57f3cb
+      AMZNEKS112: ami-03e49944b49ab1cfe
+      AMZNEKS112GPU: ami-01ed11d854b71028f
+      SLES15EKS114: ami-05ea824317ffc0c20
+      SLES15EKS114GPU: ami-05ea824317ffc0c20
+      SLES15EKS113: ami-05ea824317ffc0c20
+      SLES15EKS113GPU: ami-05ea824317ffc0c20
+      SLES15EKS111: ami-05ea824317ffc0c20
+      SLES15EKS111GPU: ami-05ea824317ffc0c20
+      SLES15EKS112: ami-05ea824317ffc0c20
+      SLES15EKS112GPU: ami-05ea824317ffc0c20
     us-west-2:
-      AMZNEKS110: ami-05a71d034119ffc12
-      AMZNEKS110GPU: ami-0901518d7557125c8
-      AMZNEKS111: ami-05ecac759c81e0b0c
-      AMZNEKS111GPU: ami-08377056d89909b2a
-      AMZNEKS112: ami-0923e4b35a30a5f53
-      AMZNEKS112GPU: ami-0bebf2322fd52a42e
-      SLES15EKS110: ami-0ee8adc50e1dca1c3
-      SLES15EKS110GPU: ami-0ee8adc50e1dca1c3
-      SLES15EKS111: ami-0ee8adc50e1dca1c3
-      SLES15EKS111GPU: ami-0ee8adc50e1dca1c3
-      SLES15EKS112: ami-0ee8adc50e1dca1c3
-      SLES15EKS112GPU: ami-0ee8adc50e1dca1c3
+      AMZNEKS114: ami-0c13bb9cbfd007e56
+      AMZNEKS114GPU: ami-0ad9a8dc09680cfc2
+      AMZNEKS113: ami-09bcf0b1f5b446c5d
+      AMZNEKS113GPU: ami-0baa09d4698a02910
+      AMZNEKS111: ami-07813238ad47d8bd8
+      AMZNEKS111GPU: ami-0650e04f1880a8a9d
+      AMZNEKS112: ami-0267968f4310157f1
+      AMZNEKS112GPU: ami-02551cb499388bebb
+      SLES15EKS114: ami-0f1e3b3fb0fec0361
+      SLES15EKS114GPU: ami-0f1e3b3fb0fec0361
+      SLES15EKS113: ami-0f1e3b3fb0fec0361
+      SLES15EKS113GPU: ami-0f1e3b3fb0fec0361
+      SLES15EKS111: ami-0f1e3b3fb0fec0361
+      SLES15EKS111GPU: ami-0f1e3b3fb0fec0361
+      SLES15EKS112: ami-0f1e3b3fb0fec0361
+      SLES15EKS112GPU: ami-0f1e3b3fb0fec0361
 Conditions: 
   CreateECR: !Equals [ !Ref SDHEcrRepo, true ]
+  AmznOS: !Equals
+    - !Ref NodeAMIOS
+    - Amazon-Linux-HVM
+  SuseOS: !Equals
+    - !Ref NodeAMIOS
+    - SUSE-SLES-15-HVM
+  UseCustomAmi: !Not [ !Equals [ !Ref CustomAmiId, "" ] ]
 Resources:
   SDHCopyZipsFunction:
     Type: AWS::Lambda::Function
@@ -685,6 +802,13 @@ Resources:
       - ECRVsolText
       - ECRVsystemHANAInit
       - ECRKanikoPE
+      - ECRComSAPHANA
+      - ECRComSAPSLES
+      - ECRComSAPVsys
+      - ECRComSAPCodeServer
+      - ECRComSAPAxino
+      - ECRRbase
+      - ECRVsolSpark
     Type: AWS::Lambda::Function
     Properties:
       Description: Cleans Up ECR images and ELB created by SDH installation upon Stack Delete
@@ -779,6 +903,10 @@ Resources:
                 Action:
                   - ecr:*Delete*
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/vsolution*"
+              - Effect: Allow
+                Action:
+                  - ecr:*Delete*
+                Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/vsystem*"
   SDHInstance:
     DependsOn: SDHNetworkInterface
     Type: AWS::EC2::Instance
@@ -803,8 +931,6 @@ Resources:
                     ', export SDH_INSTALL=, !Ref 'SDHInstall', '
 
                     ', export SDH_VERSION=, !Ref 'SDHVersion', '
-
-                    ', export SDH_CHECKPOINT_STORE=, !Ref 'SDHCheckPointS3Bucket', '
                     
                     ', export SDHSwS3BucketName=, !Ref 'SDHSwS3BucketName', '
 
@@ -820,10 +946,6 @@ Resources:
 
                     ', export SDH_S_USER_TYPE=, !Ref 'SDHSUserType', '
                     
-                    ', export SDH_ACCESS_KEY=, !Ref 'SDHS3AccessKey', '
-
-                    ', export SDH_SECRET_ACCESS_KEY=, !Ref 'SDHS3SecretAccessKey', '
-
                     ', export SDH_NAME_SPACE=, !Ref 'SDHNameSpace', '
 
                     ', export SDH_ELB_PRIVPUB=, !Ref 'SDHELBPrivatePublic', '
@@ -888,16 +1010,22 @@ Resources:
           DeviceIndex: 0
       IamInstanceProfile: !Ref SDHIAMProfile
       KeyName: !Ref KeyPairName
-      ImageId: !FindInMap
-        - AWSAMIRegionMap
-        - !Ref "AWS::Region"
+      ImageId: !If
+        - UseCustomAmi
+        - !Ref CustomAmiId
         - !FindInMap
-          - K8sVersionMap
-          - !Ref KubernetesVersion
+          - AWSAMIRegionMap
+          - !Ref "AWS::Region"
           - !FindInMap
-            - InstanceTypes
-            - !Ref NodeInstanceTypeSDH
-            - Type
+            - OStoK8sVersionMap
+            - !Ref NodeAMIOS
+            - !FindInMap
+              - K8sVersionMap
+              - !Ref KubernetesVersion
+              - !FindInMap
+                - InstanceTypes
+                - !Ref NodeInstanceTypeSDH
+                - Type
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -1039,6 +1167,16 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: "com.sap.datahub.linuxx86_64/vsolution-textanalysis"
+  ECRVsolSpark:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/vsolution-spark_on_k8s"
+  ECRRbase:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/rbase"
   ECRVsystemHANAInit:
     Condition: CreateECR
     Type: AWS::ECR::Repository
@@ -1239,6 +1377,31 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: "com.sap.datahub.linuxx86_64/hello-sap"
+  ECRComSAPHANA:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/hana"
+  ECRComSAPSLES:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/sles"
+  ECRComSAPVsys:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/vsystem-vrep-csi"
+  ECRComSAPCodeServer:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/code-server"
+  ECRComSAPAxino:
+    Condition: CreateECR
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "com.sap.datahub.linuxx86_64/axino-service"
 Outputs:
   SDHInstHostIpAddress:
     Value: !GetAtt SDHNetworkInterface.PrimaryPrivateIpAddress
