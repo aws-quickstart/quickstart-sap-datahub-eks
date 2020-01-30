@@ -352,7 +352,7 @@ then
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/code-server --tags Key=stack,Value=${STACK_ID} --region $REGION
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/axino-service --tags Key=stack,Value=${STACK_ID} --region $REGION
     aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/vsolution-spark_on_k8s --tags Key=stack,Value=${STACK_ID} --region $REGION
-aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/rbase   --tags Key=stack,Value=${STACK_ID} --region
+    aws ecr tag-resource --resource-arn arn:aws:ecr:${REGION}:${AWS_ACCT}:repository/com.sap.datahub.linuxx86_64/rbase   --tags Key=stack,Value=${STACK_ID} --region $REGION
 fi
 
 
