@@ -6,6 +6,7 @@ Metadata:
       - Label:
           default: VPC network configuration
         Parameters:
+          - NumberOfAZs 
           - AvailabilityZones
           - VPCCIDR
           - PrivateSubnet1CIDR
@@ -80,6 +81,8 @@ Metadata:
         default: Nodes instance type
       NodeInstanceTypeSDH:
         default: SDH Installation Host instance type
+      NumberOfAZs:
+        default: Number of Availability Zones
       NumberOfNodes:
         default: Number of nodes
       NodeGroupName:
@@ -126,6 +129,11 @@ Parameters:
     Description: The name of an existing public/private key pair, which allows you
       to securely connect to your instance after it launches
     Type: AWS::EC2::KeyPair::KeyName
+  NumberOfAZs:
+    Type: String
+    AllowedValues: ["2", "3"]
+    Default: "3"
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
   ProvisionBastionHost:
     Description: Enable or disable the creation of a Bastion host in the first public subnet
     Type: String
@@ -357,23 +365,30 @@ Parameters:
     Default: "my-sdh.com"
 Rules:
   EKSSupport:
-    Assertions: 
+    Assertions:
       - AssertDescription: Your AWS Region does *NOT* yet support Amazon EKS
-        Assert: !Contains 
-        -  - us-west-2
-           - us-east-1
-           - us-east-2
-           - eu-west-1
-           - eu-west-2
-           - eu-west-3
-           - eu-north-1
-           - eu-central-1
-           - ap-southeast-1
-           - ap-southeast-2
-           - ap-northeast-1
-           - ap-northeast-2
-           - ap-south-1
-        - !Ref 'AWS::Region' 
+        Assert: !Contains
+          -  - us-west-2
+             - us-east-1
+             - us-east-2
+             - sa-east-1
+             - eu-west-1
+             - eu-west-2
+             - eu-west-3
+             - eu-north-1
+             - eu-central-1
+             - ap-southeast-1
+             - ap-southeast-2
+             - ap-northeast-1
+             - ap-northeast-2
+             - ap-south-1
+             - ca-central-1
+          - !Ref 'AWS::Region'
+Conditions:
+  3AZDeployment: !Equals [!Ref NumberOfAZs, "3"]
+  2AZDeployment: !Or
+    - !Equals [!Ref NumberOfAZs, "2"]
+    - !Equals [!Ref NumberOfAZs, "3"]
 Resources:
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -381,8 +396,8 @@ Resources:
       TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template'
       Parameters:
         AvailabilityZones: !Join [ ',', !Ref 'AvailabilityZones' ]
+        NumberOfAZs: !Ref 'NumberOfAZs'
         KeyPairName: !Ref 'KeyPairName'
-        NumberOfAZs: '3'
         PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
         PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
         PrivateSubnet3ACIDR: !Ref 'PrivateSubnet3CIDR'
@@ -398,15 +413,27 @@ Resources:
       TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/aws-sap-data-hub-eks-existing-VPC.yaml'
       Parameters:
         PublicSubnet1ID: !GetAtt VPCStack.Outputs.PublicSubnet1ID
-        PublicSubnet2ID: !GetAtt VPCStack.Outputs.PublicSubnet2ID
-        PublicSubnet3ID: !GetAtt VPCStack.Outputs.PublicSubnet3ID
+        PublicSubnet2ID: !If
+          - 2AZDeployment
+          - !GetAtt VPCStack.Outputs.PublicSubnet2ID
+          - !Ref AWS::NoValue
+        PublicSubnet3ID: !If
+          - 3AZDeployment
+          - !GetAtt VPCStack.Outputs.PublicSubnet3ID
+          - !Ref AWS::NoValue
         KeyPairName: !Ref KeyPairName
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
         ProvisionBastionHost: !Ref ProvisionBastionHost
         PrivateSubnet1ID: !GetAtt VPCStack.Outputs.PrivateSubnet1AID
-        PrivateSubnet2ID: !GetAtt VPCStack.Outputs.PrivateSubnet2AID
-        PrivateSubnet3ID: !GetAtt VPCStack.Outputs.PrivateSubnet3AID
+        PrivateSubnet2ID: !If
+          - 2AZDeployment
+          - !GetAtt VPCStack.Outputs.PrivateSubnet2AID
+          - !Ref AWS::NoValue
+        PrivateSubnet3ID: !If
+          - 3AZDeployment
+          - !GetAtt VPCStack.Outputs.PrivateSubnet3AID
+          - !Ref AWS::NoValue
         NumberOfNodes: !Ref NumberOfNodes
         NodeGroupName: !Ref NodeGroupName
         NodeVolumeSize: !Ref NodeVolumeSize

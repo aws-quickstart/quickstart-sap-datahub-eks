@@ -31,6 +31,7 @@ Metadata:
       - Label:
           default: SAP Data Hub Configuration
         Parameters:
+          - Proxy
           - SDHInstall
           - SDHVersion
           - SDHSwS3BucketName
@@ -86,6 +87,8 @@ Metadata:
         default: Private subnet 2 ID
       PrivateSubnet3ID:
         default: Private subnet 3 ID
+      Proxy:
+        default: HTTP/HTTPS Proxy IP:Port
       VPCID:
         default: VPC ID
       AdditionalEKSAdminArns:
@@ -258,20 +261,24 @@ Parameters:
     Type: "AWS::EC2::Subnet::Id"
     Description: The ID of the public subnet in Availability Zone 1 in your existing VPC (e.g., subnet-a0246dcd)
   PublicSubnet2ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: The ID of the public subnet in Availability Zone 2 in your existing VPC (e.g., subnet-b1236eea)
+    Type: String
+    Default: ""
   PublicSubnet3ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: The ID of the public subnet in Availability Zone 3 in your existing VPC (e.g., subnet-c3456aba)
+    Type: String
+    Default: ""
   PrivateSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
     Description: The ID of the private subnet in Availability Zone 1 in your existing VPC (e.g., subnet-fe9a8b32)
   PrivateSubnet2ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: The ID of the private subnet in Availability Zone 2 in your existing VPC (e.g., subnet-be8b01ea)
+    Type: String
+    Default: ""
   PrivateSubnet3ID:
-    Type: "AWS::EC2::Subnet::Id"
-    Description: The ID of the private subnet in Availability Zone 3 in your existing VPC (e.g., subnet-abd39039)
+    Type: String
+    Default: ""
+  Proxy:
+    Type: "String"
+    Description: The IP address and Port of your Proxy Server (e.g., http://10.0.0.10:3128/ for your SQUID proxy)
+    Default: ""
   KubernetesVersion:
     Type: String
     AllowedValues: [ "1.14", "1.13", "1.12" ]

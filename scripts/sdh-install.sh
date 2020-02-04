@@ -7,8 +7,6 @@
 
 #
 
-
-
 ###BEGIN-Global Variables###
 #define global file locations
 CONFIG_FILE="/root/install/config"
@@ -57,6 +55,15 @@ sed -i '/SDH_S_USER_PASS/d' "$CONFIG_FILE"
 sed -i '/SDH_VORA_PASS/d'  "$CONFIG_FILE"
 #sed -i '/SDH_ACCESS_KEY/d' "$CONFIG_FILE"
 #sed -i '/SDH_SECRET_ACCESS_KEY/d'  "$CONFIG_FILE"
+
+#Setup Proxy info
+if [[ -n "$PROXY" ]]
+then
+    export http_proxy="$PROXY"
+    export https_proxy="$PROXY"
+    export no_proxy=localhost,127.0.0.1,169.254.169.254
+fi
+
 
 #set variables based on which SAP Data Hub version we are installing
 
@@ -394,7 +401,17 @@ else
             then
             #enable below for ECR role integration
 
-                    bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
+                    #Setup Proxy for SDH install
+                    if [[ -n "$PROXY" ]]
+                    then
+                        export http_proxy="$PROXY"
+                        export https_proxy="$PROXY"
+                        export no_proxy=localhost,127.0.0.1,169.254.169.254
+                        KUBE-IP=$(kubectl get service kubernetes | awk '{ print $3 }')
+                        bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  --cluster-http-proxy="$PROXY" --cluster-https-proxy="$PROXY" --cluster-no-proxy="$KUBE-IP",kubernetes.default.svc,localhost,127.0.0.1,169.254.169.254
+                    fi
+
+                        bash "$INSTALL_SH" -n "$SDH_NAME_SPACE" -r "$ECR_NAME" --sap-registry=73554900100900002861.docker.repositories.sapcdn.io --sap-registry-login-username "$SDH_S_USERID"  --sap-registry-login-password "$SDH_S_USER_PASS"  --sap-registry-login-type=1  --vora-system-password "$SDH_VORA_PASS" --vora-admin-username admin --vora-admin-password "$SDH_VORA_PASS" -a --non-interactive-mode --interactive-security-configuration no -c --cert-domain "$SDH_CERT_DOMAIN_NAME" -e vora-cluster.components.dlog.replicationFactor='1'  -e vora-cluster.components.dlog.standbyFactor='0'  --vflow-aws-iam-role="$SDH_IAM_ROLE_ARN" --enable-checkpoint-store no  
 
             else
 
